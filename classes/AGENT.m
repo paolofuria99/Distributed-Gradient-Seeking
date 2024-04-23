@@ -1,11 +1,15 @@
 classdef AGENT < matlab.mixin.Copyable
     %AGENT This class is used to create an agent object
-    %  Detailed explanation goes here
-
+    %  This is the robot agent class
+    
+    %TODO: Alcune proprietà saranno private, ovvero non accessibili
+    %dall'esterno. Al momento sono pubbliche perché
     properties(Access=public)
         type                % [string]              Type of agent (unicycle, etc.)
         id                  % [-]   (1x1 int)       ID of the agent
-        agent_radius        % [m]   (1x1 double)    Radius of the agent
+        
+        % Initial state of the agent
+        x_init              % [m]   (2x1 double)    Initial state of the agent
 
         % State of the agent
         x_est               % [m]   (2x1 double)    Estimated state of the agent
@@ -15,7 +19,6 @@ classdef AGENT < matlab.mixin.Copyable
         % Real state of the agent
         x_real              % [m]   (2x1 double)    Real state of the agent
         th_real             % [rad] (1x1 double)    Real angle of the agent
-        x_init              % [m]                   Initial state of the agent
         
         % Noise matrices
         R_gps               % Covariance matrix of the GPS measurements
@@ -24,28 +27,17 @@ classdef AGENT < matlab.mixin.Copyable
         % Jacobians
         J_H                 % Jacobian of the measurement model
 
-        % Target information
-        target_est          % [m]   (2x1 double)    Estimated target position
-        target_real         % [m]   (2x1 double)    Real target position
-        target_cov_pos      % Covariance of the target position
-        
-        % Communication
-        neighbors; 			% list of the neighbors of the agent
-		all_agent_pos; 	    % [m]                   List of the neighbors positions (also target)
-		all_agent_pos_cov; 	% covariance of the neighbors positions (also target)
+        % Sensor information
+        d_est               % [?]   (2x1 double)    Estimated field value
+        d_real              % [?]   (2x1 double)    Real field value
+        d_std               % std of the sensor
 
-        % Control gains
-        gains               % [-]   (2x1 double)    Control gains of the agent
-
-        % Maximum velocities
-        v_max               % [m/s]     (1x1 double)    Maximum linear velocity of the agent
-        w_max               % [rad/s]   (1x1 double)    Maximum angular velocity of the agent
-
-        % Max acceleration
-        a_max               % [m/s^2]   Maximum linear acceleration of the agent
+        % Parameters
+        params              % [struct]              Simulation parameters
     end
-
-    methods
+    
+    % This function are public i.e. externally accessible
+    methods(Access=public)
         function obj = AGENT(q, id, type, params)
             %AGENT Construct Initialize an agent object
             %  Input:
@@ -59,6 +51,9 @@ classdef AGENT < matlab.mixin.Copyable
 
             switch obj.type
                 case 'unicycle'
+                    % Reshape the input to a column vector 
+                    reshape(q,[3,1]); 
+
                     % Initialize the state of the agent
                     obj.x_real = zeros(2,1);
                     obj.x_real(1) = q(1);
@@ -80,13 +75,6 @@ classdef AGENT < matlab.mixin.Copyable
                     % Initialize the Jacobian of the measurement model
                     obj.J_H = [1 0 0; 0 1 0];
 
-                    % Initialize the control limits
-                    obj.v_max = params.MAX_LIN_VEL;
-                    obj.w_max = params.MAX_ANG_VEL;
-                    obj.a_max = params.MAX_LIN_ACC;
-
-                    % Initialize the control gains
-                    obj.gains = params.GAINS;
                 otherwise
                     error('Unknown agent type');
             end
@@ -95,21 +83,17 @@ classdef AGENT < matlab.mixin.Copyable
             obj.R_gps = (rand(2,2)-0.5)*params.std_gps;
             obj.R_gps = obj.R_gps*obj.R_gps';
 
-            % Agent radius
-            obj.agent_radius = params.AGENT_RADIUS;
-
             % Target information
-            obj.target_est = zeros(2,1);
-            obj.target_real = zeros(2,1);
-            obj.target_cov_pos = eye(2);
-
-            % Neighbors
-            obj.neighbors = [];
-            obj.all_agent_pos = ones(params.N_agents,2)*1e6;
-            obj.all_agent_pos_cov = eye(params.N_agents,2)*1e6;
-
+            obj.d_est = 0;
+            obj.d_real= 0;
+            % TODO: d_std to be imported from params.
+            obj.d_std = 0;
+             
+            % Initialize the parameters
+            obj.params = params;
         end
 
+        % TODO: This function will be private no more accessible
         function obj = dynamics(obj, u)
             %DYNAMICS Update the state of the agent based on the control input
             %  Input:
@@ -118,7 +102,9 @@ classdef AGENT < matlab.mixin.Copyable
                 case 'unicycle'
                     % Considering to have u=[v*dt; w*dt]
                     % where v is the driving velocity and w is the angular velocity
+                    % Matrix form:
                     % q_new = q_old + G(q)*u + noise
+                    % Equation form:
                     % x_new = x_old + cos(theta)*v*dt + noise_x
                     % y_new = y_old + sin(theta)*v*dt + noise_y
                     % theta_new = theta_old + w*dt + noise_theta
@@ -198,7 +184,7 @@ classdef AGENT < matlab.mixin.Copyable
                     error('Unknown agent type - Jacobian_Measurement_Noise');
             end
         end
-
+        
         function Z_gps = gps_measurement(obj)
             %GPS_MEASUREMENT Compute the GPS measurement
             %  Output:
@@ -212,58 +198,81 @@ classdef AGENT < matlab.mixin.Copyable
             %X_INITIALIZATION Initialize the state of the agent
             obj.x_real = obj.x_init;
         end
+        
+        function compute_measure(obj, x)
+            %COMPUTE_MEASURE Compute a measurement of the field
 
-        function update_target(obj, target)
-            %UPDATE_TARGET Update the target position
-            %  Input:
-            %   target (2x1 double): Target position
-            obj.target_est = target;
+            % TODO: Da sistemare aggiungendo anche rumore
+       
+            obj.z_real = x;
+            obj.z_est = x;
         end
 
-        function compute_control(obj, param)
+        function compute_control(obj)
             %COMPUTE_CONTROL Compute the control input for the robot based on Boyd model
             %  Input:
             %   param (struct): Simulation parameters
-            goal = obj.target_est;
-            dt = param.dt;
             
-            x = obj.x_est;
-            theta = obj.th_est;
             
-            kv = obj.gains(1); 
-            kw = obj.gains(2);
+            % TODO: Implement here the algorithm to actuate the robot
+            
+            % goal = obj.target_est;
+            % dt = param.dt;
+            
+            % x = obj.x_est;
+            % theta = obj.th_est;
+            
+            % kv = obj.gains(1); 
+            % kw = obj.gains(2);
 
-            if norm(goal-x) < 0.5
-                v = 0;
-                w = 0;
-            else
-                v = kv * ([cos(theta) sin(theta)]*(goal-x));
-                w = kw * atan2( [-sin(theta) cos(theta)]*(goal-x) , [cos(theta) sin(theta)]*(goal-x) );
-            end
+            % if norm(goal-x) < 0.5
+            %     v = 0;
+            %     w = 0;
+            % else
+            %     v = kv * ([cos(theta) sin(theta)]*(goal-x));
+            %     w = kw * atan2( [-sin(theta) cos(theta)]*(goal-x) , [cos(theta) sin(theta)]*(goal-x) );
+            % end
             
             
-            % Limit the control input
-             v = min(param.MAX_LIN_VEL, v);
-            % w = min(param.MAX_ANG_VEL, w);
-            % Apply the control input
-            u = [v*dt; w*dt];
-            obj.dynamics(u);
+            % % Limit the control input
+            %  v = min(param.MAX_LIN_VEL, v);
+            % % w = min(param.MAX_ANG_VEL, w);
+            % % Apply the control input
+            % u = [v*dt; w*dt];
+            % obj.dynamics(u);
             
         end
 
-        % Calculate neighbors relative distances
-        % all_agent_pos = obj.all_agent_pos;
-        % all_agent_dist = sqrt(all_agent_pos(:,1).^2+all_agent_pos(:,2).^2);
+        function agent = PlotAgent(obj)
+            %PLOTAGENT Plot the agent
+            %  Detailed explanation goes here
+            
+            % State of the agent
+            X = [obj.x_real; obj.th_real];
+            X = reshape(X,[1,3]);
+            % Robot radius
+            R = obj.params.AGENT_RADIUS;
 
-        % % Depending on the distance to the neighbors, the agent will
-        % % choose the control input
-        % agents_in_separation = find(all_agent_dist<param.RADIUS_SEPARATION); 
-        % agents_in_alignment = find(all_agent_dist<param.RADIUS_ALIGNMENT);
-        % agents_in_cohesion = find(all_agent_dist<param.RADIUS_COHESION);
+            % Robot Visualization
+            th = linspace(0,2*pi,100); % Angle samples for the visualization of robot body
+            thwl = linspace(5*pi/6, pi/6, 60); % Angle samples for the visualization of the left robot wheel
+            thwr = linspace(7*pi/6, 11*pi/6, 60); % Angle sample for the visualization of the right robot wheel
 
-        % % Separation
-        % u_separation = all_agent_dist(agents_in_separation)/norm(all_agent_pos(agents_in_separation));
-        
+            % Robot body
+            body = patch('XData', X(1,1) + R*cos(th),'YData', X(1,2) + R*sin(th), 'FaceColor',  'red');
+            % Left wheel
+            wheel_left = patch('XData', X(1,1) + R*cos(thwl+X(1,3)), 'YData',  X(1,2) + R*sin(thwl+X(1,3)), 'FaceColor', 'k');
+            % Right wheel
+            wheel_right= patch('XData', X(1,1) + R*cos(thwr+X(1,3)), 'YData',  X(1,2) + R*sin(thwr+X(1,3)), 'FaceColor', 'k');
+            % Direction indicator
+            thick = 0.05;
+            thdir = [ pi/2, -pi/2, linspace(-asin(thick/R), asin(thick/R), 60)];
+            mdir = [repmat(thick, 1, 2), repmat(R, 1, 60)];
+            arrow = patch('XData', X(1,1)+mdir.*cos(thdir+X(1,3)),'YData', X(1,2) + mdir.*sin(thdir+X(1,3)), 'FaceColor', 'k');
+
+            % Return the handle 
+            agent = [body, wheel_left, wheel_right, arrow];
+        end
 
     end
 end
