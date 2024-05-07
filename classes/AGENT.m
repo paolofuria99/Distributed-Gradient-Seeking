@@ -9,27 +9,28 @@ classdef AGENT < matlab.mixin.Copyable
         id                  % [-]   (1x1 int)       ID of the agent
         
         % Initial state of the agent
-        x_init              % [m]   (2x1 double)    Initial state of the agent
+        q_init              % [m;m;rad]     (3x1 double)    Initial state of the agent
 
         % State of the agent
-        x_est               % [m]   (2x1 double)    Estimated state of the agent
-        th_est              % [rad] (1x1 double)    Estimated angle of the agent
-        P                   % Covariance matrix of the state
+        q_est               % [m;m;rad]     (3x1 double)    Estimated state of the agent
+        P                   %               (3x3 double)    Covariance matrix of the state
+        Q                   %               (3x3 double)    Uncertainty matrix of the dynamics model
 
         % Real state of the agent
-        x_real              % [m]   (2x1 double)    Real state of the agent
-        th_real             % [rad] (1x1 double)    Real angle of the agent
+        q_real              % [m;m;rad]     (3x1 double)    Real state of the agent
         
-        % Noise matrices
-        R_gps               % Covariance matrix of the GPS measurements
-        Q                   % Uncertainty matrix of the dynamics model
-
+        % Measuremente noise matrices
+        R_gps               %               (2x2 double)    Covariance matrix of the GPS measurements
+        
         % Jacobians
-        J_H                 % Jacobian of the measurement model
+        Jg_q                % Jacobian of the motion model wrt the state
+        Jg_w                % Jacobian of the motion model wrt the process noise
+        Jh_q                % Jacobian of the measurement model wrt the state
+        Jh_v                % Jacobian of the measurement model wrt the measurement noise
 
         % Sensor information
-        d_est               % [?]   (2x1 double)    Estimated field value
-        d_real              % [?]   (2x1 double)    Real field value
+        d_est               % [?]           (2x1 double)    Estimated field value
+        d_real              % [?]           (2x1 double)    Real field value
         d_std               % std of the sensor
 
         % Parameters
@@ -52,18 +53,14 @@ classdef AGENT < matlab.mixin.Copyable
             switch obj.type
                 case 'unicycle'
                     % Reshape the input to a column vector 
-                    reshape(q,[3,1]); 
+                    q=reshape(q,[3,1]); 
 
                     % Initialize the state of the agent
-                    obj.x_real = zeros(2,1);
-                    obj.x_real(1) = q(1);
-                    obj.x_real(2) = q(2);
-                    obj.x_init = obj.x_real;
-                    obj.x_est = obj.x_real;
-
-                    % Initialize the angle of the agent
-                    obj.th_real = q(3);
-                    obj.th_est = q(3);
+                    obj.q_real = q;
+                    obj.q_init = obj.q_real;
+                    obj.q_est = obj.q_real;
+                    
+                    % Initialize the initial state covariance matrix
                     obj.P = eye(length(q));
                     
                     % Initialize the noise matrices
@@ -71,9 +68,6 @@ classdef AGENT < matlab.mixin.Copyable
                     obj.Q(1:2,1:2) = (rand(2,2)-0.5)*params.std_dyn_xy;
                     obj.Q(1:2,1:2) = obj.Q(1:2,1:2)*obj.Q(1:2,1:2)';
                     obj.Q(3,3) = (rand())*(params.std_dyn_theta)^2;
-                    
-                    % Initialize the Jacobian of the measurement model
-                    obj.J_H = [1 0 0; 0 1 0];
 
                 otherwise
                     error('Unknown agent type');
@@ -102,84 +96,85 @@ classdef AGENT < matlab.mixin.Copyable
                 case 'unicycle'
                     % Considering to have u=[v*dt; w*dt]
                     % where v is the driving velocity and w is the angular velocity
+                    
                     % Matrix form:
                     % q_new = q_old + G(q)*u + noise
+                    
                     % Equation form:
                     % x_new = x_old + cos(theta)*v*dt + noise_x
                     % y_new = y_old + sin(theta)*v*dt + noise_y
                     % theta_new = theta_old + w*dt + noise_theta
-                    
-                    x_old = obj.x_est(1);
-                    y_old = obj.x_est(2);
-                    theta_old = obj.th_est;
+
+                    q_old = obj.q_est;
+                    x_old = q_old(1);
+                    y_old = q_old(2);
+                    theta_old = q_old(3);
 
                     % Dynamics with noise
                     G = [cos(theta_old) 0;sin(theta_old) 0; 0 1];
-                    q_new = [x_old;y_old;theta_old] + G*u + mvnrnd(zeros(3,1),obj.Q)';
-
-                    obj.x_est = q_new(1:2);
-                    obj.th_est = wrapTo2Pi(q_new(3));
+                    q_new = q_old+ G*u + mvnrnd(zeros(3,1),obj.Q)';
+                    
+                    obj.q_est = [q_new(1:2); wrapTo2Pi(q_new(3))];
 
                     % Dynamics without noise
-                    q_new = [x_old;y_old;theta_old] + G*u;
-
-                    obj.x_real = q_new(1:2);
-                    obj.th_real = wrapTo2Pi(q_new(3));
+                    q_new = q_old + G*u;
+                    
+                    obj.q_real = [q_new(1:2);wrapTo2Pi(q_new(3))];
 
                 otherwise
                     error('Unknown agent type');
             end   
-            
-            
         end
-
-        function F_x = Jacobian_PredictedState_PreviousState(obj)
-            %JACOBIAN_PREDICTEDSTATE_PREVIOUSTATE Compute the Jacobian of the dynamics wrt state
+        
+        % TODO: Da controllare: dovrebbe esserci anche la velocità v
+        % nell'equazione
+        function Jg_q = get_Jg_q(obj)
+            %GET_JG_Q Compute the Jacobian of the motion model wrt state
             %  Output:
-            %   F_x (3x3 double): Jacobian of the state
+            %   Jg_q (3x3 double): Jacobian of the state
             switch obj.type
                 case 'unicycle'
-                    F_x = [1 0 -sin(obj.th_est); 0 1 cos(obj.th_est); 0 0 1];
+                    Jg_q = [1 0 -sin(obj.th_est); 0 1 cos(obj.th_est); 0 0 1];
                 otherwise
-                    error('Unknown agent type - Jacobian_PredictedState_PreviousState');
+                    error('Unknown agent type - get_Jg_q');
             end
         end
 
-        function F_w = Jacobian_PredictedState_Noise(obj)
-            %JACOBIAN_PREDICTEDSTATE_NOISE Compute the Jacobian of the dynamics wrt noise
+        function Jg_w = get_Jg_w(obj)
+            %GET_JG_W Compute the Jacobian of the motion model wrt process noise
             %  Output:
-            %   F_w (3x3 double): Jacobian of the noise
+            %   Jg_w (3x3 double): Jacobian of the noise
             switch obj.type
                 case 'unicycle'
-                    F_w = eye(3);
+                    Jg_w = eye(3);
                 otherwise
                     error('Unknown agent type - Jacobian_PredictedState_Noise');
             end
         end
 
-        function H_x = Jacobian_Measurement_State(obj)
-            %JACOBIAN_MEASUREMENT_STATE Compute the Jacobian of the measurement wrt state
+        function Jh_q = get_Jh_q(obj)
+            %GET_JH_Q Compute the Jacobian of the measurement wrt state
             %  Output:
-            %   H_x (2x3 double): Jacobian of the measurement
+            %   Jh_q (2x3 double): Jacobian of the measurement
             switch obj.type
                 case 'unicycle'
                     % The measurement model is h(x) = [x; y] 
                     % The derivative wrt q=[x,y,th] is [1 0 0; 0 1 0]
-                    H_x = obj.H_x;
+                    Jh_q = [1 0 0; 0 1 0];
                 otherwise
                     error('Unknown agent type - Jacobian_Measurement_State');
             end
         end
 
-        function H_w = Jacobian_Measurement_Noise(obj)
-            %JACOBIAN_MEASUREMENT_NOISE Compute the Jacobian of the measurement wrt noise
+        function Jh_v = get_Jh_v(obj)
+            %GET_JH_V Compute the Jacobian of the measurement wrt measurement noise
             %  Output:
-            %   H_w (2x3 double): Jacobian of the measurement
+            %   Jh_v (2x3 double): Jacobian of the measurement
             switch obj.type
                 case 'unicycle'
                     % The measurement model is h(x) = [x; y] 
                     % The derivative wrt q=[x,y,th] is [1 0 0; 0 1 0]
-                    H_w = obj.H_w;
+                    Jh_v = eye(2);
                 otherwise
                     error('Unknown agent type - Jacobian_Measurement_Noise');
             end
@@ -190,13 +185,13 @@ classdef AGENT < matlab.mixin.Copyable
             %  Output:
             %   Z_gps (2x1 double): GPS measurement
 
-            Z_gps = obj.x_real(1:2) + mvnrnd(zeros(2,1),obj.R_gps)';
+            Z_gps = obj.q_real(1:2) + mvnrnd(zeros(2,1),obj.R_gps)';
 
         end
 
-        function x_initialization(obj)
+        function q_initialization(obj)
             %X_INITIALIZATION Initialize the state of the agent
-            obj.x_real = obj.x_init;
+            obj.q_real(1:2) = obj.q_init(1:2);
         end
         
         function compute_measure(obj, x)
@@ -243,12 +238,16 @@ classdef AGENT < matlab.mixin.Copyable
             
         end
 
-        function agent = PlotAgent(obj)
+        function agent = PlotAgent(obj,state)
             %PLOTAGENT Plot the agent
             %  Detailed explanation goes here
             
-            % State of the agent
-            X = [obj.x_real; obj.th_real];
+            if nargin == 1
+                % State of the agent
+                X = obj.q_real;
+            else
+                X = state;
+            end
             X = reshape(X,[1,3]);
             % Robot radius
             R = obj.params.AGENT_RADIUS;
