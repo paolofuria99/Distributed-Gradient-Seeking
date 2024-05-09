@@ -4,6 +4,7 @@ init
 %% Get parameters
 parameters
 params = sim_param;
+ANIMATE = 1;
 
 %% Environment definition
 
@@ -14,84 +15,124 @@ y_range = linspace(-params.ENV_SIZE, params.ENV_SIZE, 200);  % Y-axis range for 
 % Gaussian distribution 
 x_peak = -20;
 y_peak = -12;
-D = @(x,y) 10 * exp(-((x - x_peak).^2 + (y - y_peak).^2) / (2*300));
-%D = @(x,y) 18 * exp(-((x - x_peak).^2 + (y - y_peak).^2) / 600) - 10*exp(-((x-10).^2+(y-8).^2)/200);
+%D = @(x,y) 10 * exp(-((x - x_peak).^2 + (y - y_peak).^2) / (2*300));
+D = @(x,y) 18 * exp(-((x - x_peak).^2 + (y - y_peak).^2) / 600) - 10*exp(-((x-10).^2+(y-8).^2)/200);
 Z=D(X,Y);
 [DX,DY]= gradient(Z);
+k = curvature(Z);
 
 % Define the unicycle's initial position and orientation
 q0 = [0, 20, deg2rad(30)];
 
-% Create an agent;
+% Create a robot agent;
 robot = AGENT(q0,1,'unicycle',params);
 
-%% TODO: Questo parametro non servirebbe, da togliere in futuro
-% Define simulation parameters
-learning_rate = 0.3;  % Learning rate for movement
+% Simulation parameters
+dt = params.dt;
+iterations = params.max_iter;
+T = iterations/dt;
 
-% Create a figure for animation
-figure();
-hold on
-axis([-params.ENV_SIZE, params.ENV_SIZE, -params.ENV_SIZE,  params.ENV_SIZE]);
-xlabel('X');
-ylabel('Y');
-title('Unicycle Robot Gradient Descent to Find Gaussian Peak');
-grid on;
+% Algorithm parameters
+dv = 5*dt;                          
+v_star= 0.05;
+dw = @(dd) (3*dt*sign(dd -v_star));
 
-% Plot the field and the goal point
-%contourf(X, Y, D(X,Y), 50, 'LineStyle', 'none');
-contour(X, Y, D(X,Y), 30);
-colorbar;
-%quiver(X,Y,DX,DY);
+% Arrays to store outputs for plotting
+time = zeros(1, iterations);
+q_vals = zeros(3, iterations);
+v_vals = zeros(1, iterations);
+w_vals = zeros(1, iterations);
+D_vals = zeros(1, iterations);
 
-% Initialize the robot's path
-x_path = zeros(2, params.max_iter);
-x_path(:, 1) = robot.q_est(1:2);
+%% Main Loop Simulation
 
-% Create a robot object for animation
-agent = robot.PlotAgent();
-
-%% Da qua in poi è SBAGLIATO usato solo per vedere se viene fuori qualcosa
-% Tutto questo calcolo dovrebbe essere messo ad agent  e calcolare un
-% azione in base alla misura del campo
-dv = 0.5;
-v_star= 0.01;
-R=5;
-Rstar=3;
-dw = @(dd) (0.3*sign(dd -v_star));
-d=[0];
-
-% Simulate the robot's movement
-for i = 2:params.max_iter
-    % Current position of the robot
-    current_position = robot.q_real;
-
-    d_new = D(current_position(1),current_position(2));
-    d=[d d_new];
-    d_dot = d(end)-d(end-1);
-
-    disp(['dd:', num2str(d(end))])
-    disp(['dw:', num2str(dw(d_dot))])
-    q_d= robot.dynamics([dv; dw(d_dot)]);
-    q_d = robot.q_real;
-    x_path(:,i)=q_d(1:2);
-
-    % Plot the robot's new position
-    agent =robot.PlotAgent();
+for i = 1:iterations
+    t=(i-1)*dt;
+    time(i)=t;
     
-    % Break the loop if the robot is close to the peak
-    if norm([x_peak;y_peak]' - x_path(:, i)') < 2
+    % Current state
+    q_now = robot.q_real;
+    q_vals(:,i)=q_now;
+    % Current field value
+    D_now = D(q_now(1), q_now(2));
+    D_vals(i)=D_now;
+    if i==1
+        D_dot = D_now;
+    else
+        D_dot= D_vals(i)-D_vals(i-1);
+    end
+
+    % Actuate the robot
+    robot.dynamics([dv;dw(D_dot)]);
+
+    if norm([x_peak;y_peak]'-q_vals(1:2,i)')<1.5
+        iter_break = i;
         break;
     end
-    
-    % Pause for animation
-    pause(params.dt);
-    
-    % Delete the previous robot position
-    if ishandle(agent)
-        delete(agent);
+end
+iter_break = i;
+
+% Animate the simulation
+if ANIMATE
+    figure;
+    hold on;
+    axis([-params.ENV_SIZE, params.ENV_SIZE, -params.ENV_SIZE,  params.ENV_SIZE]);
+    xlabel('X');
+    ylabel('Y');
+    title('Unicycle Robot Gradient Descent to Find Gaussian Peak');
+    grid on;
+    %contourf(X, Y, D(X,Y), 50, 'LineStyle', 'none');
+    contour(X, Y, Z, 30);
+    colorbar;
+    for i = 1:length(time(1:iter_break))
+        agent=robot.PlotAgent(q_vals(:,i));
+        plot(q_vals(1, 1:i), q_vals(2, 1:i), 'b-', 'LineWidth', 2);
+        pause(dt);
+        if ishandle(agent)
+            delete(agent);
+        end
     end
+    
 end
 
-% Display the final path
-plot(x_path(1, 1:i), x_path(2, 1:i), 'b-', 'LineWidth', 2);
+% Plot results
+figure
+ax1=subplot(3, 1, 1);
+plot(time(1:iter_break), q_vals(1,1:iter_break), 'LineWidth', 1.2)
+legend('$x$', 'Interpreter', 'latex', 'Location', 'NorthWest')
+grid on
+xlabel('Time [s]')
+ylabel('X Coordinate')
+
+ax2=subplot(3, 1, 2);
+plot(time(1:iter_break), q_vals(2,1:iter_break), 'LineWidth', 1.2)
+legend('$y$', 'Interpreter', 'latex', 'Location', 'NorthWest')
+grid on
+xlabel('Time [s]')
+ylabel('Y Coordinate')
+
+ax3=subplot(3, 1, 3);
+plot(time(1:iter_break), q_vals(3,1:iter_break), 'LineWidth', 1.2)
+legend('$\theta$', 'Interpreter', 'latex', 'Location', 'NorthWest')
+grid on
+xlabel('Time [s]')
+ylabel('$\theta$ Coordinate')
+
+set(gcf, 'Position', [100 100 500 350])
+set(gcf, 'PaperPositionMode', 'auto')
+linkaxes([ax1,ax2,ax3],'x')
+
+
+% Additional visualization: plot trajectory on the scalar field
+figure
+hold on
+contour(X, Y, Z, 30)
+colorbar
+%quiver(X,Y,DX,DY,0)
+plot(q_vals(1,1:iter_break), q_vals(2,1:iter_break), 'r-', 'LineWidth', 1.5, 'DisplayName','Robot Trajectory')
+xlabel('X Coordinate')
+ylabel('Y Coordinate')
+title('Unicycle Robot Trajectory with ESC')
+grid on
+
+
