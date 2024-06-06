@@ -37,7 +37,11 @@ for i = 1:iterations
     
     % High level control -  Calculate u that depend on the field value
     u = robot.compute_control();
-    % Low level control - Actuate the robot and update the state
+    
+    %TODO: Richiamare qua la funzione per il calcolo della posizione del robot tramite triangolazione.
+    % si sostituirà quindi SOLO la funzione agent.gps_measurement() dentro a EKF, in modo tale che vada a sostituire la misura attuale del GPS
+
+    % Low level control - Actuate the robot with the high level control and update the state based on the system state and GPS measurement
     EKF(robot, u);
 
     % Stop the simulation if the robot reaches the peak
