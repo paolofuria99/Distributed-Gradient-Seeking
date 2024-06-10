@@ -62,7 +62,7 @@ classdef AGENT < matlab.mixin.Copyable
                     obj.q_est = q;
                     
                     % Initialize the initial state covariance matrix
-                    obj.P = eye(length(q));
+                    obj.P = eye(length(q)).*100;
                     
                     % Initialize the noise matrices
                     obj.Q = zeros(3,3);
