@@ -19,11 +19,12 @@ robot = AGENT(params.q0,1,'unicycle',params);
 
 % Arrays to store outputs for plotting
 time = zeros(1, iterations);
-q_real_vals = zeros(3, iterations);
-q_est_vals = zeros(3, iterations);
-v_vals = zeros(1, iterations);
-w_vals = zeros(1, iterations);
-D_vals = zeros(1, iterations);
+q_real_vals = zeros(3, iterations);     % Real pose
+q_est_vals = zeros(3, iterations);      % Estimated pose
+v_vals = zeros(1, iterations);          % Linear Velocity values
+w_vals = zeros(1, iterations);          % Angular Velocity values
+D_vals = zeros(1, iterations);          % Field measured values
+P_vals = cell(1,iterations);            % Covariance values
 
 %% Main Loop Simulation
 for i = 1:iterations
@@ -34,7 +35,9 @@ for i = 1:iterations
     q_est_vals(:,i) = robot.q_est;
     q_real_vals(:,i) = robot.q_real;
     D_vals(i) = robot.D_new;
+    P_vals{i} = robot.P;
     
+    %% Start loop
     % High level control -  Calculate u that depend on the field value
     u = robot.compute_control();
     
@@ -44,6 +47,8 @@ for i = 1:iterations
     % Low level control - Actuate the robot with the high level control and update the state based on the system state and GPS measurement
     EKF(robot, u);
 
+    %% End Loop
+
     % Stop the simulation if the robot reaches the peak
     if norm([-20;-18]'-q_est_vals(1:2,i)')<1.5
         iter_break = i;
@@ -52,5 +57,6 @@ for i = 1:iterations
 end
 iter_break = i;
 
+%% Plotting results
 plot_simulation;
 
