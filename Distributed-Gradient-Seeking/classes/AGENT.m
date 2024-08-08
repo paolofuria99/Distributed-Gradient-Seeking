@@ -59,7 +59,7 @@ classdef AGENT < matlab.mixin.Copyable
                     % Initialize the state of the agent
                     obj.q_real = q;
                     obj.q_init = q;
-                    obj.q_est = q;
+                    obj.q_est = q;%[0;0;params.q0(3)];
                     
                     % Initialize the initial state covariance matrix
                     obj.P = eye(length(q)).*100;

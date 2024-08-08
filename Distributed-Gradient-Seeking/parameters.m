@@ -3,13 +3,13 @@ params = struct(...
     'c',             3e8,                   ...    % [m/s]   Propagation velocity of UWB signals
     'dt',            0.1,                   ...    % [s]     Time step
     'max_iter',      1e4,                   ...    % [-]     Maximum number of iterations
-    'N_agents',      4,                     ...    % [-]     Number of agents'
+    'N_agents',      8,                    ...    % [-]     Number of agents'
     'D',             @(x,y) 18 * exp(-((x - (-20)).^2 + (y - (-18)).^2) / 600) - 10*exp(-((x-10).^2+(y-8).^2)/200), ... % []   Field function
     'ENV_SIZE',      60,                    ...    % [m]     Size of the environment
     'ENV_STEP',      200,                   ...    % [-]     Number of steps for the environment
     'q0',            [0, 20, deg2rad(30)],  ...    % [m]     Initial position and orientation
     'control_alg',   'Matveev',             ...    % [-]     Control algorithm
-    'radius',        30,                     ...    % [m]     Radius of circular region for drones initialization
+    'radius',        30,                    ...    % [m]     Radius of circular region for drones initialization
     'DRONE_RADIUS',  1,                     ...    % [m]     Drone radius
     'AGENT_RADIUS',  1,                     ...    % [m]     Agent radius
     'WHEEL_RADIUS',  0.01,                  ...    % [m]     Wheel radius
