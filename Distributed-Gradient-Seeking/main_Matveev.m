@@ -113,7 +113,7 @@ for i = 1:iterations
 
     % Low level control - Actuate the robot with the high level control and
     % update the state based on the system state and drones' estimate
-    % EKF(robot, u, x_est(1:2));
+    % EKF(robot, u, drone(1).x_est(1:2,i+1));
     EKF(robot, u);
 
     %%%%%%%%%%%%%%%%%%%%%%%%%%%%%% End Loop %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%

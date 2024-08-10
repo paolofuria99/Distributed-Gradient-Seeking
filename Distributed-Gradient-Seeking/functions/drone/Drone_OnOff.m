@@ -1,5 +1,6 @@
 function Drone_OnOff(idx,drone)
-%DRONE_ONOFF Summary of this function goes here
+%DRONE_ONOFF This function disables the functioning of all drones that do
+%not communicate with other drones
 %   Detailed explanation goes here
 
 if drone(idx).N_neighbors == 0

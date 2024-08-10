@@ -29,10 +29,14 @@ if drone(idx).Connection == "on"
     P = (eye(3) - K * H) * P_dyn * (eye(3) - K * H)' + K * R * K';
     
     %% 3) Linear correction to estimated state
-    % % Linearize around current estimated state
-    % H = Jacobian_measModel(idx,drone,x_est);
-    % Delta_x = -pinv((H' * (R \ H))) * (H' / R) * (TimeDifferenceOfArrival(idx,x,drone) - TimeDifferenceOfArrival(idx,x_est,drone))';
-    % x_est = x_est - Delta_x;
+    % Linearize around current estimated state
+    H = Jacobian_measModel(idx,drone,x_est);
+    WLS_matrix = (H' * (R \ H));
+    lambda = 1e-10;                       % Regularization parameter
+    reg = lambda * eye(size(WLS_matrix)); % Regularization term
+    WLS_matrix = WLS_matrix + reg;
+    Delta_x = -inv(WLS_matrix) * (H' / R) * (TimeDifferenceOfArrival(idx,x,drone) - TimeDifferenceOfArrival(idx,x_est,drone))';
+    x_est = x_est - Delta_x;
 else
     % Keep the last estimate
     x_est = drone(idx).x_est(:,i);

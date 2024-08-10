@@ -211,7 +211,7 @@ classdef AGENT < matlab.mixin.Copyable
                     dw = @(dd) (3*obj.params.dt*sign(dd - v_star));
 
                     % Measure the field
-                    obj.D_new = obj.D(obj.q_real(1), obj.q_real(2)); %q_est
+                    obj.D_new = obj.D(obj.q_est(1), obj.q_est(2));
                     % TODO: Add noise to the measurement
                     D_dot = obj.D_new - obj.D_old;
                     

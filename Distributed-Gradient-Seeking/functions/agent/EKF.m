@@ -21,7 +21,7 @@
 %         P_est(k,k) = (I - W(k) * Jh_q(k))) * P_est(k,k-1)(I - W(k) * Jh_q(k)))' + K(k)R(k)K(k)'	% P_est(k,k) is the updated covariance matrix
 
 
-function EKF(agent, u)
+function EKF(agent, u, x_est)
     %EKF Extended Kalman Filter init
     
     % Extrapolate necessary parameters / EKF inputs

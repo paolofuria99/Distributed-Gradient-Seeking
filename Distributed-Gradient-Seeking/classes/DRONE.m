@@ -64,7 +64,9 @@ classdef DRONE < matlab.mixin.Copyable
                     obj.x_est = zeros(3,params.max_iter+1);
 
                     % Initialize the process noise
-                    obj.Q = (randn(3,3)-0.5)*params.std_dyn_xy;
+                    % obj.Q = (randn(3,3)-0.5)*params.std_dyn_xy;
+                    % obj.Q = obj.Q*obj.Q';
+                    obj.Q = eye(3,3)*params.std_dyn_xy;
                     obj.Q = obj.Q*obj.Q';
 
                     % Initialize number of neighbor drones
