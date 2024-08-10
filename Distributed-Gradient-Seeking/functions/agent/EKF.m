@@ -21,7 +21,7 @@
 %         P_est(k,k) = (I - W(k) * Jh_q(k))) * P_est(k,k-1)(I - W(k) * Jh_q(k)))' + K(k)R(k)K(k)'	% P_est(k,k) is the updated covariance matrix
 
 
-function EKF(agent, u, x_est)
+function EKF(agent, u)
     %EKF Extended Kalman Filter init
     
     % Extrapolate necessary parameters / EKF inputs
@@ -49,8 +49,8 @@ function EKF(agent, u, x_est)
     % Update the Kalman gain
     K = P * Jh_q' * inv(S);
     % Update the next state of the system
-    % tmp = K*(agent.gps_measurement() - q_est(1:2)); % Innovation
-    tmp = K*(x_est - q_est(1:2)); % Innovation
+    tmp = K*(agent.gps_measurement() - q_est(1:2)); % Innovation
+    % tmp = K*(x_est - q_est(1:2)); % Innovation
     q_est(1:2) = q_est(1:2) + tmp(1:2);
     q_est(3) = wrapTo2Pi(q_est(3) + wrapTo2Pi(tmp(end)));
     P = (I- K * Jh_q) * P * (I- K * Jh_q)' + K * R * K';

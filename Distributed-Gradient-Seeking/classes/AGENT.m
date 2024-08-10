@@ -59,7 +59,7 @@ classdef AGENT < matlab.mixin.Copyable
                     % Initialize the state of the agent
                     obj.q_real = q;
                     obj.q_init = q;
-                    obj.q_est = q;%[0;0;params.q0(3)];
+                    obj.q_est = [0;0;0];
                     
                     % Initialize the initial state covariance matrix
                     obj.P = eye(length(q)).*100;
@@ -211,7 +211,7 @@ classdef AGENT < matlab.mixin.Copyable
                     dw = @(dd) (3*obj.params.dt*sign(dd - v_star));
 
                     % Measure the field
-                    obj.D_new = obj.D(obj.q_est(1), obj.q_est(2));
+                    obj.D_new = obj.D(obj.q_real(1), obj.q_real(2)); %q_est
                     % TODO: Add noise to the measurement
                     D_dot = obj.D_new - obj.D_old;
                     

@@ -2,7 +2,7 @@
 close all;
 clearvars;
 clc;
-rng(0);
+% rng(0);
 
 % Add the functions folder to the path
 addpath(genpath(pwd));

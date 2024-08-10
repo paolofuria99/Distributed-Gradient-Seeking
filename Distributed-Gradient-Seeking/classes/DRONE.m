@@ -3,27 +3,35 @@ classdef DRONE < matlab.mixin.Copyable
     %  This is the drone class
     
     properties(Access=public)
-        type                % [string]                          Type of drone (linear)
-        id                  % [-]           (1x1 int)           ID of the drone
+        type                % [string]                                       Type of drone (linear)
+        id                  % [-]           (1x1 int)                        ID of the drone
         
         % Initial state of the drone
-        q_init              % [m;m;m]       (3x1 double)        Initial state of the drone
+        q_init              % [m;m;m]       (3x1 double)                     Initial state of the drone
 
         % Real state of the drone
-        q_real              % [m;m;m]       (3x1 double)        Real state of the drone
-        P                   % []            (3x3 double)        Covariance matrix of the state
+        q_real              % [m;m;m]       (3x1 double)                     Real state of the drone
+        P                   % []            (3x3 double)                     Covariance matrix of the state
 
         % Estimated state of the robot by the drone
-        x_est               % [m;m;m]       (3x1 double)        Estimated state of the robot by the drone
+        x_est               % [m;m;m]       (3xiterations double)            Estimated state of the robot by the drone
 
         % Process noise of robot's dynamics
-        Q                   % []            (3x3 double)        Noise on the dynamics model of the robot
+        Q                   % []            (3x3 double)                     Noise on the dynamics model of the robot
+
+        % Number of neighbor drones
+        N_neighbors         % []            (1x1 double)                     Number of neighbors
+
+        neighbors           % []            (N_neighborsx1 double)           Neighboring drones
 
         % Noise on TDOA measurement
-        R                   %               (N-1xN-1 double)    Covariance matrix of the noise on TDOA measurement
+        R                   % []            (N_neighborsxN_neighbors double) Covariance matrix of the noise on TDOA measurement
+
+        % Flag of drone operation
+        Connection          % []            (1x1 string)                     Drone on/off
 
         % Parameters
-        params              % [struct]                          Simulation parameters
+        params              % [struct]                                       Simulation parameters
     end
     
     % This function are public i.e. externally accessible
@@ -53,14 +61,23 @@ classdef DRONE < matlab.mixin.Copyable
 
                     % Initialize the initial estimate of the robot by the
                     % drone
-                    obj.x_est = zeros(3,1);
+                    obj.x_est = zeros(3,params.max_iter+1);
 
-                    obj.Q = (rand(3,3)-0.5)*params.std_dyn_xy;
+                    % Initialize the process noise
+                    obj.Q = (randn(3,3)-0.5)*params.std_dyn_xy;
                     obj.Q = obj.Q*obj.Q';
 
+                    % Initialize number of neighbor drones
+                    obj.N_neighbors = params.N_agents-1;
+
+                    % Initialize neighboring drones
+                    obj.neighbors = zeros(obj.N_neighbors,1);
+
                     % TDOA measurement model noise
-                    obj.R = (rand(params.N_agents-1)-0.5)*params.std_drones*params.c;
+                    obj.R = (rand(obj.N_neighbors)-0.5)*params.std_drones;
                     obj.R = obj.R*obj.R';
+                    % Drone on/off
+                    obj.Connection = 'on';
 
                 otherwise
                     error('Unknown drone type');
@@ -94,7 +111,7 @@ classdef DRONE < matlab.mixin.Copyable
                     y_old = q_old(2);
                     z_old = q_old(3);
                     A = [1 0 0;0 1 0;0 0 1];
-                    B = [obj.params.dt 0 0;0 obj.params.dt 0;0 0 0];
+                    B = [1 0 0;0 1 0;0 0 1];
                     q_new = A*q_old + B*u;
 
                     obj.q_real = q_new;
@@ -119,14 +136,37 @@ classdef DRONE < matlab.mixin.Copyable
             end
 
             %% Method 1) The drones move along the direction of two consecutive drone's state estimates
-            direction = [x(1,index)-x(1,index-1), x(2,index)-x(2,index-1), 0];
+            direction = [x(1,index)-x(1,index-1), x(2,index)-x(2,index-1), 0-obj.q_real(3)];
             direction_norm = norm(direction);
-            u = 2*direction./direction_norm;
-            u = u';
+            direction_rd = [x(1,index)-obj.q_real(1), x(2,index)-obj.q_real(2), 0-obj.q_real(3)];
+            distance = sqrt((x(1,index)-obj.q_real(1))^2+(x(2,index)-obj.q_real(2))^2+(0-obj.q_real(3))^2);
+            if (distance >= 20) %&& (direction_norm >= 0.5)
+                u_lim = 2*obj.params.dt;
+                u = direction./direction_norm;
+                u = u_lim.*u;
+                u = u';
+            elseif (distance >= 10) %&& (direction_norm >= 0.5)
+                u_lim = obj.params.dt;
+                u = direction./direction_norm;
+                u = u_lim.*u;
+                u = u';
+            elseif distance < 10
+                u = [0;0;0];
+            else
+                u = [0;0;0];
+            end
+
+            %% Method 2)
+            % direction = [x(1,index)-x(1,index-1), x(2,index)-x(2,index-1), 0];
+            % direction_norm = norm(direction);
+            % u_lim = 5*obj.params.dt;
+            % u = direction./direction_norm;
+            % u = u_lim.*u;
+            % u = u';
 
         end
 
-
+        
         function distance = Distance_RobotDrone(obj,x)
             %DISTANCE_ROBOTDRONE Relative distance between each pair
             %robot/drone
@@ -143,6 +183,20 @@ classdef DRONE < matlab.mixin.Copyable
         end
 
 
+        function obj = ComputeMeasNoiseMatrix(obj)
+            % COMPUTEMEASNOISEMATRIX Measurement noise matrix
+            % This function calculates the noise on the TDOA measurement 
+            % model of each drone based on its number of neighboring drones
+            %  Input:
+            %   obj (DRONE):                    Drone object
+
+            % obj.R = (rand(obj.N_neighbors)-0.5)*obj.params.std_drones;
+            % obj.R = obj.R*obj.R';
+            obj.R = ones(obj.N_neighbors)*obj.params.std_drones^2;
+            obj.R = obj.R - (obj.params.std_drones^2)/2 * (ones(obj.N_neighbors)-eye(obj.N_neighbors));
+
+        end
+
         function measurement_noise = MeasurementNoise(obj)
             %MEASUREMENTNOISE Noise on the TDOA measurement model
             % This function defines the noise on the TDOA measurement model of each drone
@@ -150,7 +204,11 @@ classdef DRONE < matlab.mixin.Copyable
             %   obj (DRONE):                    Drone object
             %  Output:
             %   measurement_noise (Nx1 double): Noise on TDOA measurements
-            measurement_noise = mvnrnd(zeros(size(obj.R,1),1),obj.R);
+            
+            if obj.Connection == "on"
+                measurement_noise = mvnrnd(zeros(size(obj.R,1),1),obj.R);
+            end
+
         end
 
 
@@ -170,16 +228,17 @@ classdef DRONE < matlab.mixin.Copyable
             end
             X = reshape(X,[1,3]);
             % Drone radius
-            R = obj.params.DRONE_RADIUS;
+            r = obj.params.DRONE_RADIUS;
 
             % Drone Visualization
             th = linspace(0,2*pi,100); % Angle samples for the visualization of drone body
 
             % Drone body
-            body = patch('XData', X(1,1) + R*cos(th),'YData', X(1,2) + R*sin(th), 'ZData', repmat(X(3),[1,100]), 'FaceColor',  'red');
+            body = patch('XData', X(1,1) + r*cos(th),'YData', X(1,2) + r*sin(th), 'ZData', repmat(X(3),[1,100]), 'FaceColor',  'red');
 
             % Return the handle 
             drone = body;
+
         end
 
     end
