@@ -7,13 +7,13 @@ sim_param = struct(...
     'ENV_SIZE',      60,                    ...    % [m]   Size of the environment
     'ENV_STEP',      200,                   ...    % [-]   Number of steps for the environment
     'q0',            [0, 20, deg2rad(30)],  ...    % [m]   Initial position and orientation
-    'control_alg',   'Matveev',             ...    % [-]   Control algorithm
+    'control_alg',   'Matveev-v3',             ...    % [-]   Control algorithm.  Options : 'Matveev', 'Matveev-v2', 'Matveev-v3'
     'AGENT_RADIUS',  1,                     ...    % [m]   Agent radius
     'WHEEL_RADIUS',  0.01,                  ...    % [m]   Wheel radius
     'AXLE_LENGTH',   0.05,                  ...    % [m]   Inter-Axle length
     'std_dyn_xy',    0.2,                   ...    % [m]   Standard deviation of the dynamic noise
     'std_dyn_theta', 1*(pi/180),            ...    % [rad] Standard deviation of the dynamic noise
-    'std_gps',       3,                   ...    % [m]   Standard deviation of the GPS noise
+    'std_gps',       5,                   ...    % [m]   Standard deviation of the GPS noise
     'MAX_LIN_VEL',   1e-6,                  ...    % [m/s] Maximum linear velocity
     'MAX_LIN_ACC',   0.5,                   ...    % [m/s^2] Maximum linear acceleration
     'MAX_ANG_VEL',   0.3,                   ...    % [rad/s] Maximum angular velocity
