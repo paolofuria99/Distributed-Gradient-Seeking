@@ -106,23 +106,25 @@ legend('Location','best');
 grid on;
 
 %% Plot the error ellipses
-kfig=kfig+1;
-figure(kfig);
-hold on;
-contour(X, Y, Z, 30, 'DisplayName','Scalar Field');
-colorbar;
-
-for i = [1, 5:5:iter_break]  % Combining first ellipse and every 5th ellipse
-    plot_ellipse(q_est_vals(1,i), q_est_vals(2,i), P_vals{i}(1:2,1:2), 0.95, [0.9290 0.6940 0.1250]);
+if PLOT_ERROR_ELLIPSES
+    kfig=kfig+1;
+    figure(kfig);
+    hold on;
+    contour(X, Y, Z, 30, 'DisplayName','Scalar Field');
+    colorbar;
+    
+    for i = [1, 5:5:iter_break]  % Combining first ellipse and every 5th ellipse
+        plot_ellipse(q_est_vals(1,i), q_est_vals(2,i), P_vals{i}(1:2,1:2), 0.95, [0.9290 0.6940 0.1250]);
+    end
+    
+    plot(q_est_vals(1,1:iter_break), q_est_vals(2,1:iter_break), 'r--', 'LineWidth', 1.5, 'DisplayName','Robot Est Trajectory');
+    plot(q_real_vals(1,1:iter_break), q_real_vals(2,1:iter_break), 'b-', 'LineWidth', 1.5, 'DisplayName','Robot Real Trajectory');
+    hold off;
+    xlabel('X Coordinate [m]');
+    ylabel('Y Coordinate [m]');
+    title('Error Ellipses of the Robot Estimated Position');
+    grid on;
 end
-
-plot(q_est_vals(1,1:iter_break), q_est_vals(2,1:iter_break), 'r--', 'LineWidth', 1.5, 'DisplayName','Robot Est Trajectory');
-plot(q_real_vals(1,1:iter_break), q_real_vals(2,1:iter_break), 'b-', 'LineWidth', 1.5, 'DisplayName','Robot Real Trajectory');
-hold off;
-xlabel('X Coordinate [m]');
-ylabel('Y Coordinate [m]');
-title('Error Ellipses of the Robot Estimated Position');
-grid on;
 
 %% Plot covariance matrix - diagonal elements
 sigma_xx = zeros(1, iter_break);
@@ -151,6 +153,17 @@ hold off;
 kfig=kfig+1;
 figure(kfig);
 surf(X,Y,Z);
+hold on;
+plot3(Dx_peaks, Dy_peaks, Dz_peaks, 'r*', 'MarkerSize', 10);
+hold off;
+
+%% Plot in a 3D-view the field curvature
+kfig=kfig+1;
+figure(kfig);
+hold on;
+surf(X,Y,k);
+title('Field curvature');
+hold off;
 
 %% Plot field curvature
 kfig=kfig+1;
@@ -172,12 +185,11 @@ kfig=kfig+1;
 figure(kfig);
 hold on
 plot(time(1:iter_break), D_vals(1,1:iter_break), 'LineWidth', 1.4);%, 'DisplayName', '$D{field}$');
-legend('Interpreter', 'latex', 'Location', 'NorthWest');
 grid on;
 xlabel('Time [s]');
 ylabel('D [-]');
 title('Field Values');
-legend('Interpreter', 'latex', 'Location', 'NorthWest');
+%legend('Interpreter', 'latex', 'Location', 'NorthWest');
 grid on;
 hold off
 
