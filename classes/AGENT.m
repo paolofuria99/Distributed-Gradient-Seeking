@@ -5,6 +5,10 @@ classdef AGENT < matlab.mixin.Copyable
     properties(Access=public)
         type                % [string]              Type of agent (unicycle, etc.)
         id                  % [-]   (1x1 int)       ID of the agent
+
+        % Max velocities
+        v_max               % [m/s]         (1x1 double)    Max linear velocity of the agent
+        w_max               % [rad/s]       (1x1 double)    Max angular velocity of the agent
         
         % Initial state of the agent
         q_init              % [m;m;rad]     (3x1 double)    Initial state of the agent
@@ -15,7 +19,7 @@ classdef AGENT < matlab.mixin.Copyable
         % Real state of the agent
         q_real              % [m;m;rad]     (3x1 double)    Real state of the agent
         P                   % []           (3x3 double)    Covariance matrix of the state
-        Q                   % [?]           (3x3 double)    Uncertainty matrix of the dynamics model
+        Q                   % []           (3x3 double)    Uncertainty matrix of the dynamics model
 
         % Measuremente noise matrices
         R_gps               %               (2x2 double)    Covariance matrix of the GPS measurements
@@ -68,6 +72,9 @@ classdef AGENT < matlab.mixin.Copyable
 
             switch obj.type
                 case 'unicycle'
+                    obj.v_max = params.MAX_LIN_VEL/params.dt;
+                    obj.w_max = params.MAX_ANG_VEL/params.dt;
+
                     % Reshape the input to a column vector 
                     q=reshape(q,[3,1]); 
 
@@ -237,15 +244,14 @@ classdef AGENT < matlab.mixin.Copyable
             %  Output:
             %   u (2x1 double): Control input
             switch obj.params.control_alg
-                case 'Matveev'
+                case 'Matveev-v1'
                     % Control algorithm parameters based on Matveev's paper
-                    dv = 5*obj.params.dt; 
-                    v_star = 0.05; % TODO: varies this value according to the field
-                    dw = @(dd) (3*obj.params.dt*sign(dd - v_star));
+                    dv = obj.v_max*obj.params.dt; 
+                    v_star = obj.params.V_STAR; 
+                    dw = @(dd) (obj.w_max*obj.params.dt*sign(dd - v_star));
 
                     % Measure the field
                     obj.D_new = obj.D(obj.q_real(1), obj.q_real(2));
-                    % TODO: Add noise to the measurement
                     D_dot = obj.D_new - obj.D_old;
                     
                     % Compute the control input
@@ -255,7 +261,7 @@ classdef AGENT < matlab.mixin.Copyable
                     obj.D_old = obj.D_new;
                 case 'Matveev-v2'
                     % Initialization of parameters and variables
-                    dv = 5 * obj.params.dt; 
+                    dv = obj.v_max* obj.params.dt; 
                     v_star_base = 0.05; % Base value of v_star
                     k_p = 0.1; % Proportional gain for adjusting v_star
                     previous_D = obj.D_old;
@@ -268,7 +274,7 @@ classdef AGENT < matlab.mixin.Copyable
                     v_star = v_star_base + k_p * abs(D_dot);
                     
                     % Control law for angular velocity with sliding mode
-                    dw = @(dd) (3 * obj.params.dt * sign(dd - v_star));
+                    dw = @(dd) (obj.w_max * obj.params.dt * sign(dd - v_star));
                     
                     % Compute the control input
                     u = [dv; dw(D_dot)];
@@ -277,7 +283,7 @@ classdef AGENT < matlab.mixin.Copyable
                     obj.D_old = obj.D_new;
                 case 'Matveev-v3'
                     % Initialization of parameters and variables
-                    dv = 5 * obj.params.dt; 
+                    dv = obj.v_max * obj.params.dt; 
                     v_star_base = 0.05; % Base value of v_star
                     k_p = 0.1; % Proportional gain
                     k_i = 0.05; % Integral gain
@@ -303,7 +309,7 @@ classdef AGENT < matlab.mixin.Copyable
                     v_star = v_star_base + k_p * error + k_i * integral_error + k_d * derivative_error;
                     
                     % Control law for angular velocity with sliding mode
-                    dw = @(dd) (3 * obj.params.dt * sign(dd - v_star));
+                    dw = @(dd) (obj.w_max * obj.params.dt * sign(dd - v_star));
                     
                     % Compute the control input
                     u = [dv; dw(D_dot)];

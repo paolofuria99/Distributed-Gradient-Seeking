@@ -7,6 +7,20 @@ y_range = linspace(-params.ENV_SIZE, params.ENV_SIZE, params.ENV_STEP);  % Y-axi
 D = params.D;
 Z = D(X,Y);
 
+z_range = D(x_range,y_range);
+
 % Usefull parameters of the field
-[DX,DY]= gradient(Z);
+[DX,DY] = gradient(Z);
+
+% Curvature of the field
 k = curvature(Z);
+
+% Find local maxima in both dimensions
+TF = islocalmax(Z, 1) & islocalmax(Z, 2); 
+[row, col] = find(TF); 
+Dx_peaks = X(row, col);
+Dy_peaks = Y(row, col);
+Dz_peaks = Z(row, col);
+
+
+
