@@ -17,7 +17,7 @@ environment;
 % According to Matveev paper, make hypotesis regarding the field and check
 % robot parameters
 R_star=3;                         % [m] - Desired distance of arrival from the maximum point of the field
-q_minus=1;                        % [-] - Lower bound of the intensity of the field
+q_minus=5;                        % [-] - Lower bound of the intensity of the field
 sigma2_minus = 100;               % [m^2] - Lower limit of the field variance
 sigma2_plus = 500;                % [m^2] - Upper limit of the field variance
 R_est = 9;                        % [m] - Estimated started distance from the field center

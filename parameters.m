@@ -11,8 +11,8 @@ params = struct(...
     'q0',            [-20, 20, deg2rad(30)],  ...    % [m]   Initial position and orientation of the agent
     'control_alg',   'Matveev-v1',          ...    % [-]   Control algorithm.  Options : 'Matveev-v1', 'Matveev-v2', 'Matveev-v3'
     'MAX_LIN_VEL',   0.5,                   ...    % [m/s] Maximum linear velocity of the agent 5
-    'MAX_ANG_VEL',   0.6,                   ...    % [rad/s] Maximum angular velocity of the agent 3
-    'V_STAR',        0.005,                  ...    % [-]   Matveev main parameter
+    'MAX_ANG_VEL',   0.8,                   ...    % [rad/s] Maximum angular velocity of the agent 3
+    'V_STAR',        0.05,                  ...    % [-]   Matveev main parameter
     'AGENT_RADIUS',  1,                     ...    % [m]   Agent radius
     'WHEEL_RADIUS',  0.01,                  ...    % [m]   Wheel radius
     'AXLE_LENGTH',   0.05,                  ...    % [m]   Inter-Axle length
