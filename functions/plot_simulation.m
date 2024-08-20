@@ -1,6 +1,7 @@
 %% Plot Simulation
 % This script plots the simulation results of the distributed gradient seeking unicycle robot 
 kfig=0;
+
 %% Animate the simulation
 if ANIMATE
     kfig=kfig+1;
@@ -24,14 +25,36 @@ if ANIMATE
     end
 end
 
-%% Plot results
+%% Plot x,y,theta coordinates of the robot, the real and the estimated one with the errors
+% Support variables
+% Extract variances
+sigma2_xx = zeros(1, iter_break);
+sigma2_yy = zeros(1, iter_break);
+sigma2_tt = zeros(1, iter_break);
+for i = 1:iter_break
+    sigma2_xx(i) = P_vals{i}(1,1);
+    sigma2_yy(i) = P_vals{i}(2,2);
+    sigma2_tt(i) = P_vals{i}(3,3);
+end
+% Calculate the 95% confidence interval for x
+x_ci_upper = q_est_vals(1,1:iter_break) + 1.96 * sqrt(sigma2_xx(1:iter_break));
+x_ci_lower = q_est_vals(1,1:iter_break) - 1.96 * sqrt(sigma2_xx(1:iter_break));
+% Calculate the 95% confidence interval for y
+y_ci_upper = q_est_vals(2,1:iter_break) + 1.96 * sqrt(sigma2_yy(1:iter_break));
+y_ci_lower = q_est_vals(2,1:iter_break) - 1.96 * sqrt(sigma2_yy(1:iter_break));
+% Calculate the 95% confidence interval for theta
+tt_ci_upper = q_est_vals(3,1:iter_break) + 1.96 * sqrt(sigma2_tt(1:iter_break));
+tt_ci_lower = q_est_vals(3,1:iter_break) - 1.96 * sqrt(sigma2_tt(1:iter_break));
+
+% Main plot
 kfig=kfig+1;
 figure(kfig);
 ax1 = subplot(3, 2, 1);
 hold on;
 plot(time(1:iter_break), q_real_vals(1,1:iter_break), 'LineWidth', 1.4, 'DisplayName', '$x_{real}$');
 plot(time(1:iter_break), q_est_vals(1,1:iter_break), 'r--', 'LineWidth', 1,  'DisplayName', '$x_{est}$');
-legend('Interpreter', 'latex', 'Location', 'NorthWest');
+fill([time(1:iter_break) fliplr(time(1:iter_break))], [x_ci_upper fliplr(x_ci_lower)], 'b', 'FaceAlpha', 0.2, 'EdgeColor', 'none', 'DisplayName','$95\%$ C.I.');
+legend('Interpreter', 'latex', 'Location', 'northeast');
 grid on;
 xlabel('Time [s]');
 ylabel('$x$ Coordinate [m]');
@@ -44,14 +67,15 @@ mean_error_x = mean(x_error);
 yline(mean_error_x,'--', sprintf('%.3f',mean_error_x), 'Color', "red",'LineWidth',2,'LabelHorizontalAlignment','right', 'LabelVerticalAlignment','top', 'DisplayName','Mean', 'FontSize',12);
 xlabel('Time [s]');
 ylabel('$x$ - Error [m]');
-legend('Interpreter', 'latex', 'Location', 'NorthWest');
+legend('Interpreter', 'latex', 'Location', 'northeast');
 grid on;
 
 ax3 = subplot(3, 2, 3);
 hold on;
 plot(time(1:iter_break), q_real_vals(2,1:iter_break), 'LineWidth', 1.4, 'DisplayName', '$y_{real}$');
 plot(time(1:iter_break), q_est_vals(2,1:iter_break), 'r--', 'LineWidth', 1,  'DisplayName', '$y_{est}$');
-legend('Interpreter', 'latex', 'Location', 'NorthWest');
+fill([time(1:iter_break) fliplr(time(1:iter_break))], [y_ci_upper fliplr(y_ci_lower)], 'b', 'FaceAlpha', 0.2, 'EdgeColor', 'none', 'DisplayName','$95\%$ C.I.');
+legend('Interpreter', 'latex', 'Location', 'northeast');
 grid on;
 xlabel('Time [s]');
 ylabel('$y$ Coordinate [m]');
@@ -64,14 +88,15 @@ mean_error_y = mean(y_error);
 yline(mean_error_y,'--', sprintf('%.3f',mean_error_y), 'Color', "red",'LineWidth',2,'LabelHorizontalAlignment','right', 'LabelVerticalAlignment','top','DisplayName','Mean', 'FontSize',12);
 xlabel('Time [s]');
 ylabel('$y$ - Error [m]');
-legend('Interpreter', 'latex', 'Location', 'NorthWest');
+legend('Interpreter', 'latex', 'Location', 'northeast');
 grid on;
 
 ax5 = subplot(3, 2, 5);
 hold on;
 plot(time(1:iter_break), q_real_vals(3,1:iter_break), 'LineWidth', 1.4, 'DisplayName', '$\theta _{real}$');
 plot(time(1:iter_break), q_est_vals(3,1:iter_break), 'r--', 'LineWidth', 1.0,  'DisplayName', '$\theta _{est}$');
-legend('Interpreter', 'latex', 'Location', 'NorthWest');
+fill([time(1:iter_break) fliplr(time(1:iter_break))], [tt_ci_upper fliplr(tt_ci_lower)], "b", 'FaceAlpha', 0.2, 'EdgeColor', 'none', 'DisplayName','$95\%$ C.I.');
+legend('Interpreter', 'latex', 'Location', 'northeast');
 grid on;
 xlabel('Time [s]');
 ylabel('$\theta$ Coordinate [rad]');
@@ -84,7 +109,7 @@ mean_error_theta = mean(theta_error);
 yline(mean_error_theta,'--', sprintf('%.3f',mean_error_theta), 'Color', "red",'LineWidth',2,'LabelHorizontalAlignment','right', 'LabelVerticalAlignment','top','DisplayName','Mean', 'FontSize',12);
 xlabel('Time [s]');
 ylabel('$\theta$ - Error [rad]');
-legend('Interpreter', 'latex', 'Location', 'NorthWest');
+legend('Interpreter', 'latex', 'Location', 'northeast');
 grid on;
 
 set(gcf, 'Position', [100 100 500 350]);
@@ -127,22 +152,14 @@ if PLOT_ERROR_ELLIPSES
 end
 
 %% Plot covariance matrix - diagonal elements
-sigma_xx = zeros(1, iter_break);
-sigma_yy = zeros(1, iter_break);
-sigma_tt = zeros(1, iter_break);
 
-for i = 1:iter_break
-    sigma_xx(i) = P_vals{i}(1,1);
-    sigma_yy(i) = P_vals{i}(2,2);
-    sigma_tt(i) = P_vals{i}(3,3);
-end
 
 kfig=kfig+1;
 figure(kfig);
 hold on;
-plot(time(1:iter_break), sigma_xx, 'Color', 'r', 'DisplayName', '$\sigma_{xx}^2$');
-plot(time(1:iter_break), sigma_yy, 'Color', 'b', 'DisplayName', '$\sigma_{yy}^2$');
-plot(time(1:iter_break), sigma_tt, 'Color', 'g', 'DisplayName', '$\sigma_{\theta\theta}^2$');
+plot(time(1:iter_break), sigma2_xx, 'Color', 'r', 'DisplayName', '$\sigma_{xx}^2$');
+plot(time(1:iter_break), sigma2_yy, 'Color', 'b', 'DisplayName', '$\sigma_{yy}^2$');
+plot(time(1:iter_break), sigma2_tt, 'Color', 'g', 'DisplayName', '$\sigma_{\theta\theta}^2$');
 xlabel('Time [s]');
 ylabel('Covariance Matrix Diagonal Elements');
 legend('Interpreter', 'latex', 'Location', 'best');
