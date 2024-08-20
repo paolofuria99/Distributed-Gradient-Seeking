@@ -1,45 +1,48 @@
 classdef DRONE < matlab.mixin.Copyable
-    %DRONE This class is used to create an agent object
+    %DRONE This class is used to create an drone object
     %  This is the drone class
     
     properties(Access=public)
-        type                % [string]              Type of agent (linear, unicycle, etc.)
-        id                  % [-]   (1x1 int)       ID of the drone
+        type                % [string]                                       Type of drone (linear)
+        id                  % [-]           (1x1 int)                        ID of the drone
         
         % Initial state of the drone
-        x_init              % [m]   (3x1 double)    Initial state of the drone
-
-        % State of the drone
-        x_est               % [m]   (3x1 double)    Estimated state of the drone
-        th_est              % [rad] (1x1 double)    Estimated angle of the drone
-        P                   % Covariance matrix of the state
+        q_init              % [m;m;m]       (3x1 double)                     Initial state of the drone
 
         % Real state of the drone
-        x_real              % [m]   (3x1 double)    Real state of the drone
-        th_real             % [rad] (1x1 double)    Real angle of the drone
-        
-        % Noise matrices
-        R_gps               % Covariance matrix of the GPS measurements
-        Q                   % Uncertainty matrix of the dynamics model
+        q_real              % [m;m;m]       (3x1 double)                     Real state of the drone
+        P                   % []            (3x3 double)                     Covariance matrix of the state
 
-        % Jacobians
-        J_H                 % Jacobian of the measurement model
+        % Estimated state of the robot by the drone
+        x_est               % [m;m;m]       (3xiterations double)            Estimated state of the robot by the drone
 
-        % Sensor information
-        d_est               % [?]   (3x1 double)    Estimated field value
-        d_real              % [?]   (3x1 double)    Real field value
-        d_std               % std of the sensor
+        % Error between estimate and robot's real position
+        Delta_x             % [m;m;m]       (3xiterations double)            Error in drone's estimate
+
+        % Process noise of robot's dynamics
+        Q                   % []            (3x3 double)                     Noise on the dynamics model of the robot
+
+        % Number of neighbor drones
+        N_neighbors         % []            (1x1 double)                     Number of neighbors
+
+        neighbors           % []            (N_neighborsx1 double)           Neighboring drones
+
+        % Noise on TDOA measurement
+        R                   % []            (N_neighborsxN_neighbors double) Covariance matrix of the noise on TDOA measurement
+
+        % Flag of drone operation
+        Connection          % []            (1x1 string)                     Drone on/off
 
         % Parameters
-        params              % [struct]              Simulation parameters
+        params              % [struct]                                       Simulation parameters
     end
     
     % This function are public i.e. externally accessible
     methods(Access=public)
         function obj = DRONE(q, id, type, params)
-            %DRONE Construct Initialize an agent object
+            %DRONE Construct Initialize an drone object
             %  Input:
-            %   q (4x1 double): Generalized coordinates of the drone
+            %   q (3x1 double): Generalized coordinates of the drone
             %   id (int):       ID of the drone
             %   type:           Type of dynamic of the drone
             %   params:         Parameters of the drone
@@ -48,145 +51,209 @@ classdef DRONE < matlab.mixin.Copyable
             obj.id = id;
 
             switch obj.type
-                % DA RIVEDERE PER ADATTARLA EVENTUALMENTE AL DRONE
-                case 'unicycle'
+                case 'linear'
                     % Reshape the input to a column vector 
-                    reshape(q,[4,1]); 
+                    q=reshape(q,[3,1]); 
 
                     % Initialize the state of the drone
-                    obj.x_real = zeros(3,1);
-                    obj.x_real(1) = q(1);
-                    obj.x_real(2) = q(2);
-                    obj.x_real(3) = q(3);
-                    obj.x_init = obj.x_real;
-                    obj.x_est = obj.x_real;
+                    obj.q_real = q;
+                    obj.q_init = q;
+                    
+                    % Initialize the initial state covariance matrix
+                    obj.P = eye(length(q)).*100;
 
-                    % Initialize the angle of the drone
-                    obj.th_real = q(4);
-                    obj.th_est = q(4);
-                    obj.P = eye(length(q));
-                    
-                    % Initialize the noise matrices
-                    obj.Q = zeros(3,3);
-                    obj.Q(1:2,1:2) = (rand(2,2)-0.5)*params.std_dyn_xy;
-                    obj.Q(1:2,1:2) = obj.Q(1:2,1:2)*obj.Q(1:2,1:2)';
-                    obj.Q(3,3) = (rand())*(params.std_dyn_theta)^2;
-                    
-                    % Initialize the Jacobian of the measurement model
-                    obj.J_H = [1 0 0; 0 1 0];
+                    % Initialize the initial estimate of the robot by the
+                    % drone
+                    obj.x_est = zeros(3,params.max_iter+1);
+                    % Initialize the initial error of the robot's estimated
+                    % position by the drone
+                    obj.Delta_x = zeros(3,params.max_iter+1);
+
+                    % Initialize the process noise
+                    % obj.Q = (randn(3,3)-0.5)*params.std_dyn_xy;
+                    % obj.Q = obj.Q*obj.Q';
+                    obj.Q = eye(3,3)*params.std_dyn_xy;
+                    obj.Q = obj.Q*obj.Q';
+
+                    % Initialize number of neighbor drones
+                    obj.N_neighbors = params.N_agents-1;
+
+                    % Initialize neighboring drones
+                    obj.neighbors = zeros(obj.N_neighbors,1);
+
+                    % TDOA measurement model noise
+                    obj.R = (rand(obj.N_neighbors)-0.5)*params.std_drones;
+                    obj.R = obj.R*obj.R';
+                    % Drone on/off
+                    obj.Connection = 'on';
 
                 otherwise
-                    error('Unknown agent type');
+                    error('Unknown drone type');
             end
-            
-            % Measurement model noise
-            obj.R_gps = (rand(2,2)-0.5)*params.std_gps;
-            obj.R_gps = obj.R_gps*obj.R_gps';
-
-            % Target information
-            obj.d_est = 0;
-            obj.d_real= 0;
-            % TODO: d_std to be imported from params.
-            obj.d_std = 0;
              
             % Initialize the parameters
             obj.params = params;
         end
 
-        % TODO: This function will be private, no more accessible
-        % DA RIVEDERE PER ADATTARLA EVENTUALMENTE AL DRONE
         function obj = dynamics(obj, u)
             %DYNAMICS Update the state of the drone based on the control input
             %  Input:
+            %   obj (DRONE):    Drone object
             %   u (2x1 double): Control input of the drone
             switch obj.type
-                case 'unicycle'
-                    % Considering to have u=[v*dt; w*dt]
-                    % where v is the driving velocity and w is the angular velocity
-                    % Matrix form:
-                    % q_new = q_old + G(q)*u + noise
-                    % Equation form:
-                    % x_new = x_old + cos(theta)*v*dt + noise_x
-                    % y_new = y_old + sin(theta)*v*dt + noise_y
-                    % theta_new = theta_old + w*dt + noise_theta
+                case 'linear'
+                    % Considering to have u=[vx; vy; vz]
+                    % where vx, vy and vz are the driving velocities [m/s] 
                     
-                    x_old = obj.x_est(1);
-                    y_old = obj.x_est(2);
-                    theta_old = obj.th_est;
+                    % Matrix form:
+                    % q_new = A*q_old + B*u + noise
+                    
+                    % Equation form:
+                    % x_new = x_old + vx*dt 
+                    % y_new = y_old + vy*dt 
+                    % z_new = z_old
 
-                    % Dynamics with noise
-                    G = [cos(theta_old) 0;sin(theta_old) 0; 0 1];
-                    q_new = [x_old;y_old;theta_old] + G*u + mvnrnd(zeros(3,1),obj.Q)';
+                    % True Dynamics with noise
+                    q_old = obj.q_real;
+                    x_old = q_old(1);
+                    y_old = q_old(2);
+                    z_old = q_old(3);
+                    A = [1 0 0;0 1 0;0 0 1];
+                    B = [obj.params.dt 0 0;0 obj.params.dt 0;0 0 obj.params.dt];
+                    q_new = A*q_old + B*u + mvnrnd(zeros(3,1),obj.Q)';
 
-                    obj.x_est = q_new(1:2);
-                    obj.th_est = wrapTo2Pi(q_new(3));
-
-                    % Dynamics without noise
-                    q_new = [x_old;y_old;theta_old] + G*u;
-
-                    obj.x_real = q_new(1:2);
-                    obj.th_real = wrapTo2Pi(q_new(3));
+                    obj.q_real = q_new;
 
                 otherwise
-                    error('Unknown agent type');
+                    error('Unknown drone type');
             end   
-            
-            
         end
         
-        function Z_gps = gps_measurement(obj)
-            %GPS_MEASUREMENT Compute the GPS measurement
+
+        function u = compute_control(obj,x,index)
+            %COMPUTE_CONTROL Compute the control input for the drone 
+            %  Input:
+            %   obj (DRONE):      Drone object
+            %   x (2,iterations): Estimated position of target by the system of drones
             %  Output:
-            %   Z_gps (2x1 double): GPS measurement
-
-            Z_gps = obj.x_real(1:2) + mvnrnd(zeros(2,1),obj.R_gps)';
-
-        end
-
-        function x_initialization(obj)
-            %X_INITIALIZATION Initialize the state of the agent
-            obj.x_real = obj.x_init;
-        end
-        
-        function compute_measure(obj, x)
-            %COMPUTE_MEASURE Compute a measurement of the field
-
-            % TODO: Da sistemare aggiungendo anche rumore
-       
-            obj.z_real = x;
-            obj.z_est = x;
-        end
-
-        function drone = PlotDrone(obj)
-            %PLOTDRONE Plot the drone
-            %  Detailed explanation goes here
+            %   u (3x1 double):   Control input
             
-            % State of the drone
-            X = [obj.x_real];
-            X = reshape(X, [1, 3]); % [x y z]
-            % Robot radius
-            R = obj.params.DRONE_RADIUS;
+            % Check if index is within bounds
+            if index <= 1
+                error('Index must be greater than 1 to compute direction.');
+            end
 
-            % Robot Visualization
-            th = linspace(0,2*pi,100); % Angle samples for the visualization of robot body
-            % thwl = linspace(5*pi/6, pi/6, 60); % Angle samples for the visualization of the left robot wheel
-            % thwr = linspace(7*pi/6, 11*pi/6, 60); % Angle sample for the visualization of the right robot wheel
+            %% Method 1) The drones move along the direction of two consecutive drone's state estimates
+            direction = [x(1,index)-x(1,index-1), x(2,index)-x(2,index-1), 0]; % Eventualmente far variare la z randomicamente aggiungendo un rumore
+            direction_norm = norm(direction);
+            distance = sqrt((x(1,index)-obj.q_real(1))^2+(x(2,index)-obj.q_real(2))^2+(0-obj.q_real(3))^2);
+            if norm(obj.Delta_x(:,index)) < 1
+                u_lim = 1;
+                u = direction./direction_norm;
+                u = u_lim.*u;
+                u = u';
+                % if (distance >= 20)
+                %     u_lim = 1;
+                %     u = direction./direction_norm;
+                %     u = u_lim.*u;
+                %     u = u';
+                % elseif (distance >= 10)
+                %     u_lim = 1;
+                %     u = direction./direction_norm;
+                %     u = u_lim.*u;
+                %     u = u';
+                % elseif distance < 10
+                %     u = [0;0;0];
+                % else
+                %     u = [0;0;0];
+                % end
+            else
+                u = [0;0;0];
+            end
 
-            % Robot body
-            body = patch('XData', X(1) + R*cos(th),'YData', X(2) + R*sin(th), 'ZData', repmat(X(3),[1,100]), 'FaceColor',  'red');
-            % % Left wheel
-            % wheel_left = patch('XData', X(1) + R*cos(thwl+X(3)), 'YData',  X(2) + R*sin(thwl+X(3)), 'FaceColor', 'k');
-            % % Right wheel
-            % wheel_right= patch('XData', X(1) + R*cos(thwr+X(3)), 'YData',  X(2) + R*sin(thwr+X(3)), 'FaceColor', 'k');
-            % Direction indicator
-            % thick = 0.05;
-            % thdir = [ pi/2, -pi/2, linspace(-asin(thick/R), asin(thick/R), 60)];
-            % mdir = [repmat(thick, 1, 2), repmat(R, 1, 60)];
-            % arrow = patch('XData', X(1)+mdir.*cos(thdir+X(4)),'YData', X(2) + mdir.*sin(thdir+X(4)), 'FaceColor', 'k');
+            %% Method 2)
+            % direction = [x(1,index)-x(1,index-1), x(2,index)-x(2,index-1), 0];
+            % direction_norm = norm(direction);
+            % u_lim = 5*obj.params.dt;
+            % u = direction./direction_norm;
+            % u = u_lim.*u;
+            % u = u';
+
+        end
+
+        
+        function distance = Distance_RobotDrone(obj,x)
+            %DISTANCE_ROBOTDRONE Relative distance between each pair
+            %robot/drone
+            % This function calculates the relative distance between the
+            % moving target and each drone in the environment
+            %  Input:
+            %   obj (DRONE):           Drone object
+            %   x (3x1 double):        Robot current state
+            %  Output:
+            %   distance (1x1 double): Euclidean distance between pair robot/drone
+
+            distance = sqrt((x(1)-obj.q_real(1))^2+(x(2)-obj.q_real(2))^2+(x(3)-obj.q_real(3))^2);
+
+        end
+
+
+        function obj = ComputeMeasNoiseMatrix(obj)
+            % COMPUTEMEASNOISEMATRIX Measurement noise matrix
+            % This function calculates the noise on the TDOA measurement 
+            % model of each drone based on its number of neighboring drones
+            %  Input:
+            %   obj (DRONE):                    Drone object
+
+            % obj.R = (rand(obj.N_neighbors)-0.5)*obj.params.std_drones;
+            % obj.R = obj.R*obj.R';
+            obj.R = ones(obj.N_neighbors)*obj.params.std_drones^2;
+            obj.R = obj.R - (obj.params.std_drones^2)/2 * (ones(obj.N_neighbors)-eye(obj.N_neighbors));
+
+        end
+
+        function measurement_noise = MeasurementNoise(obj)
+            %MEASUREMENTNOISE Noise on the TDOA measurement model
+            % This function defines the noise on the TDOA measurement model of each drone
+            %  Input:
+            %   obj (DRONE):                    Drone object
+            %  Output:
+            %   measurement_noise (Nx1 double): Noise on TDOA measurements
+            
+            if obj.Connection == "on"
+                measurement_noise = mvnrnd(zeros(size(obj.R,1),1),obj.R);
+            end
+
+        end
+
+
+        function drone = PlotDrone(obj,state)
+            %PLOTDRONE Plot the drone
+            %  This function plots the drone in the workspace
+            %  Input:
+            %   obj (DRONE): Drone object
+            %  Output:
+            %   state(3x1):  State of the drone
+            
+            if nargin == 1
+                % State of the drone
+                X = obj.q_real;
+            else
+                X = state;
+            end
+            X = reshape(X,[1,3]);
+            % Drone radius
+            r = obj.params.DRONE_RADIUS;
+
+            % Drone Visualization
+            th = linspace(0,2*pi,100); % Angle samples for the visualization of drone body
+
+            % Drone body
+            body = patch('XData', X(1,1) + r*cos(th),'YData', X(1,2) + r*sin(th), 'ZData', repmat(X(3),[1,100]), 'FaceColor',  'red');
 
             % Return the handle 
-            % agent = [body, wheel_left, wheel_right, arrow];
-            drone = [body];
+            drone = body;
+
         end
 
     end

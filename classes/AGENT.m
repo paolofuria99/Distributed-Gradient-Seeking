@@ -52,6 +52,7 @@ classdef AGENT < matlab.mixin.Copyable
         onlyone
 
         % Parameters for Matveev-v3
+        v_star;
         integral_error  % Integral of the error
         previous_error  % Previous error for derivative calculation
         
@@ -125,6 +126,7 @@ classdef AGENT < matlab.mixin.Copyable
 
             obj.integral_error=0;
             obj.previous_error=0;
+            obj.v_star=0;
         end
 
         function obj = dynamics(obj, u)
@@ -262,7 +264,7 @@ classdef AGENT < matlab.mixin.Copyable
                 case 'Matveev-v2'
                     % Initialization of parameters and variables
                     dv = obj.v_max* obj.params.dt; 
-                    v_star_base = 0.05; % Base value of v_star
+                    v_star_base = obj.params.V_STAR; % Base value of v_star
                     k_p = 0.1; % Proportional gain for adjusting v_star
                     previous_D = obj.D_old;
                     
@@ -271,10 +273,10 @@ classdef AGENT < matlab.mixin.Copyable
                     D_dot = obj.D_new - previous_D;
                     
                     % Adaptive v_star based on the field gradient
-                    v_star = v_star_base + k_p * abs(D_dot);
+                    obj.v_star = v_star_base + k_p * D_dot;
                     
                     % Control law for angular velocity with sliding mode
-                    dw = @(dd) (obj.w_max * obj.params.dt * sign(dd - v_star));
+                    dw = @(dd) (obj.w_max * obj.params.dt * sign(dd - obj.v_star));
                     
                     % Compute the control input
                     u = [dv; dw(D_dot)];
@@ -284,7 +286,7 @@ classdef AGENT < matlab.mixin.Copyable
                 case 'Matveev-v3'
                     % Initialization of parameters and variables
                     dv = obj.v_max * obj.params.dt; 
-                    v_star_base = 0.05; % Base value of v_star
+                    v_star_base = obj.params.V_STAR; % Base value of v_star
                     k_p = 0.1; % Proportional gain
                     k_i = 0.05; % Integral gain
                     k_d = 0.01; % Derivative gain
@@ -306,10 +308,10 @@ classdef AGENT < matlab.mixin.Copyable
                     derivative_error = (error - previous_error) / obj.params.dt;
                     
                     % PID control to adjust v_star
-                    v_star = v_star_base + k_p * error + k_i * integral_error + k_d * derivative_error;
+                    obj.v_star = v_star_base + k_p * error + k_i * integral_error + k_d * derivative_error;
                     
                     % Control law for angular velocity with sliding mode
-                    dw = @(dd) (obj.w_max * obj.params.dt * sign(dd - v_star));
+                    dw = @(dd) (obj.w_max * obj.params.dt * sign(dd - obj.v_star));
                     
                     % Compute the control input
                     u = [dv; dw(D_dot)];
