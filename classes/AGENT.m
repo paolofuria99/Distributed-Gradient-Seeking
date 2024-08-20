@@ -42,19 +42,20 @@ classdef AGENT < matlab.mixin.Copyable
         params              % [struct]              Simulation parameters
 
         % Parameters for GF-mom algorithm
-        D_now
-        D_delta_x
-        D_delta_y
-        theta_now
-        k
-        vx
-        vy
-        onlyone
+        % D_now
+        % D_delta_x
+        % D_delta_y
+        % theta_now
+        % k
+        % vx
+        % vy
+        % onlyone
 
         % Parameters for Matveev-v3
         v_star;
         integral_error  % Integral of the error
         previous_error  % Previous error for derivative calculation
+        dw
         
     end
     
@@ -116,17 +117,18 @@ classdef AGENT < matlab.mixin.Copyable
             obj.params = params;
 
             % Initialize the parameters for GS-mom algorithm
-            obj.D_now = 0;
-            obj.D_delta_x = 0;
-            obj.D_delta_y = 0;
-            obj.vx = 0;
-            obj.vy = 0;
-            obj.k = 0;
-            obj.onlyone = true;
+            % obj.D_now = 0;
+            % obj.D_delta_x = 0;
+            % obj.D_delta_y = 0;
+            % obj.vx = 0;
+            % obj.vy = 0;
+            % obj.k = 0;
+            % obj.onlyone = true;
 
             obj.integral_error=0;
             obj.previous_error=0;
             obj.v_star=0;
+            obj.dw=0;
         end
 
         function obj = dynamics(obj, u)
@@ -251,13 +253,14 @@ classdef AGENT < matlab.mixin.Copyable
                     dv = obj.v_max*obj.params.dt; 
                     v_star = obj.params.V_STAR; 
                     dw = @(dd) (obj.w_max*obj.params.dt*sign(dd - v_star));
-
+                    
                     % Measure the field
                     obj.D_new = obj.D(obj.q_real(1), obj.q_real(2));
                     D_dot = obj.D_new - obj.D_old;
                     
                     % Compute the control input
                     u = [dv; dw(D_dot)];
+                    obj.dw = dw(D_dot); % For debug purposes
                     
                     % Update the field value
                     obj.D_old = obj.D_new;
@@ -277,9 +280,10 @@ classdef AGENT < matlab.mixin.Copyable
                     
                     % Control law for angular velocity with sliding mode
                     dw = @(dd) (obj.w_max * obj.params.dt * sign(dd - obj.v_star));
-                    
+
                     % Compute the control input
                     u = [dv; dw(D_dot)];
+                    obj.dw = dw(D_dot); % For debug purposes
                     
                     % Update the field value and previous_D
                     obj.D_old = obj.D_new;
@@ -315,6 +319,7 @@ classdef AGENT < matlab.mixin.Copyable
                     
                     % Compute the control input
                     u = [dv; dw(D_dot)];
+                    obj.dw = dw(D_dot); % For debug purposes
                     
                     % Update the field value, previous_D, and previous_error
                     obj.D_old = obj.D_new;
