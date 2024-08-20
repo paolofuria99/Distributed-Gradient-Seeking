@@ -21,7 +21,7 @@
 %         P_est(k,k) = (I - W(k) * Jh_q(k))) * P_est(k,k-1)(I - W(k) * Jh_q(k)))' + K(k)R(k)K(k)'	% P_est(k,k) is the updated covariance matrix
 
 
-function EKF(agent, u, boolMissingMeasure, z_est)
+function EKF(agent, u, boolMissingMeasure, z_est, R_est)
     %EKF Extended Kalman Filter init
     
     % Extrapolate necessary parameters / EKF inputs
@@ -35,6 +35,8 @@ function EKF(agent, u, boolMissingMeasure, z_est)
     % Simulate missing measure
     if boolMissingMeasure==1 
         R = eye(2)*1e10;
+    elseif nargin>3
+        R = R_est;              % If R_est is provided then 
     else
         R = agent.R_gps;        % TODO: Da sostituire con quello derivante dai droni
     end

@@ -1,4 +1,4 @@
-function x_est = Drones_Update(params,i,drone)
+function [x_est, P_est] = Drones_Update(params,i,drone)
 %DRONES_UPDATE This function computes the average estimated state of the
 %robot and the average estimated covariance matrix and assigns them to the
 %classes that identify each drone in the system
@@ -48,6 +48,7 @@ end
 % Since one estimate has been agreed by the system of drones, x_est can be
 % taken arbitrarily by a random drone in the environment
 x_est = drone(1).x_est(:,i+1);
+P_est = drone(1).P;
 
 end
 
