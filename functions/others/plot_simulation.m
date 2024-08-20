@@ -17,12 +17,16 @@ if ANIMATE
     
     for i = 1:length(time(1:iter_break))
         agent = robot.PlotAgent(q_ROBOT_real_vals(:,i));
+        %drone = drone.PlotDrone2(q_ROBOT_real_vals(1:2,i));
         plot(q_ROBOT_real_vals(1, 1:i), q_ROBOT_real_vals(2, 1:i), 'b-', 'LineWidth', 2);
+        plot(q_ROBOT_est_vals(1, 1:i), q_ROBOT_est_vals(2, 1:i), 'r--', 'LineWidth', 2);
         pause(dt);
         if ishandle(agent)
             delete(agent);
         end
-    end
+    end    
+    
+
 end
 
 %% Plot x,y,theta coordinates of the robot, the real and the estimated one with the errors
@@ -112,7 +116,8 @@ ylabel('$\theta$ - Error [rad]');
 legend('Interpreter', 'latex', 'Location', 'northeast');
 grid on;
 
-set(gcf, 'Position', [100 100 500 350]);
+% set(gcf, 'Position', [100 100 500 350]);
+set(gcf, 'WindowState', 'maximized');
 set(gcf, 'PaperPositionMode', 'auto');
 linkaxes([ax1,ax2,ax3,ax4,ax5,ax6],'x');
 

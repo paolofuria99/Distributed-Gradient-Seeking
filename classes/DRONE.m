@@ -254,6 +254,67 @@ classdef DRONE < matlab.mixin.Copyable
             % Return the handle 
             drone = body;
 
+
+        end
+
+        function drone = PlotDrone2(obj,state)
+            %PLOTDRONE Plot the drone
+            %  This function plots the drone in the workspace
+            %  Input:
+            %   obj (DRONE): Drone object
+            %  Output:
+            %   state(3x1):  State of the drone
+            
+            % Plot the drone structure (a simple quadcopter design)
+            % Initial position at x(1), y(1)
+            if nargin == 1
+                % State of the agent
+                x=obj.q_real(1);
+                y=obj.q_real(2);
+            else
+                x=state(1);
+                y=state(2);
+            end
+            % Scaling factor (adjust this value to scale the size of the drone)
+            scale = 2.0;
+            
+            
+            % Body of the drone (center circle)
+            body = rectangle('Position', [x(1)-0.3*scale, y(1)-0.3*scale, 0.6*scale, 0.6*scale], 'Curvature', [1, 1], ...
+                             'FaceColor', 'b', 'EdgeColor', 'k');
+            
+            % Arms of the drone
+            arm1 = plot([x(1)-0.5*scale, x(1)+0.5*scale], [y(1), y(1)], 'k', 'LineWidth', 2);
+            arm2 = plot([x(1), x(1)], [y(1)-0.5*scale, y(1)+0.5*scale], 'k', 'LineWidth', 2);
+            
+            % Propellers of the drone (small circles at the ends of the arms)
+            prop1 = rectangle('Position', [x(1)-0.55*scale, y(1)-0.55*scale, 0.2*scale, 0.2*scale], 'Curvature', [1, 1], ...
+                              'FaceColor', 'r', 'EdgeColor', 'k');
+            prop2 = rectangle('Position', [x(1)+0.35*scale, y(1)-0.55*scale, 0.2*scale, 0.2*scale], 'Curvature', [1, 1], ...
+                              'FaceColor', 'r', 'EdgeColor', 'k');
+            prop3 = rectangle('Position', [x(1)-0.55*scale, y(1)+0.35*scale, 0.2*scale, 0.2*scale], 'Curvature', [1, 1], ...
+                              'FaceColor', 'r', 'EdgeColor', 'k');
+            prop4 = rectangle('Position', [x(1)+0.35*scale, y(1)+0.35*scale, 0.2*scale, 0.2*scale], 'Curvature', [1, 1], ...
+                              'FaceColor', 'r', 'EdgeColor', 'k');
+            
+            % Loop through all coordinates to animate the drone's movement
+            for k = 1:length(x)
+                % Update the drone's position
+                set(body, 'Position', [x(k)-0.3*scale, y(k)-0.3*scale, 0.6*scale, 0.6*scale]);
+                set(arm1, 'XData', [x(k)-0.5*scale, x(k)+0.5*scale], 'YData', [y(k), y(k)]);
+                set(arm2, 'XData', [x(k), x(k)], 'YData', [y(k)-0.5*scale, y(k)+0.5*scale]);
+                set(prop1, 'Position', [x(k)-0.55*scale, y(k)-0.55*scale, 0.2*scale, 0.2*scale]);
+                set(prop2, 'Position', [x(k)+0.35*scale, y(k)-0.55*scale, 0.2*scale, 0.2*scale]);
+                set(prop3, 'Position', [x(k)-0.55*scale, y(k)+0.35*scale, 0.2*scale, 0.2*scale]);
+                set(prop4, 'Position', [x(k)+0.35*scale, y(k)+0.35*scale, 0.2*scale, 0.2*scale]);
+            
+                % Update the plot
+                drawnow;
+                
+                % Pause to control the speed of animation
+                pause(0.1);  % Adjust the pause time as needed
+            end
+            drone = [body,arm1,arm2,prop1,prop2,prop3,prop4];
         end
 
     end
