@@ -20,7 +20,7 @@ params = struct(...
     'std_gps',       5,                     ...    % [m]   Standard deviation of the GPS noise
     'N_agents',      3,                     ...    % [-]   Number of agents'                                    DRONES PARAMS
     'DRONE_RADIUS',  1,                     ...    % [m]     Drone radius
-    'std_drones',    0.1,                   ...    % [m]     Standard deviation of the noise affecting the TDOA measurements
+    'std_drones',    5,                   ...    % [m]     Standard deviation of the noise affecting the TDOA measurements
     'N_min_agents',  8,                     ...    % [-]     Minimum number of agents
     'N_max_agents',  16,                    ...    % [-]     Maximum number of agents
     'radius',        40                     ...    % [m]     Radius of region for agents initialization
