@@ -107,6 +107,23 @@ for i = 1:iterations
 
         % RMSE counter
         diff = RMSE(robot.q_real,x_est,diff); % real pose minus estimate of drones  
+
+        % Compute the controls and actuate the drones
+        if i == 1
+            for idx = 1:params.N_agents
+                % Extract the real pose of the drones
+                q_real_drones_vals(:,i,idx) = drone(idx).q_real;
+            end
+        elseif i > 1
+            for idx = 1:params.N_agents
+                % High level control - Calculate u to move the drones
+                u_drone = drone(idx).compute_control(q_ROBOT_real_vals,i);
+                % Low level control - Actuate the drones based on the calculated controls
+                drone(idx).dynamics(u_drone);
+                % Extract the real pose of the drones
+                q_real_drones_vals(:,i,idx) = drone(idx).q_real;
+            end
+        end
     end
 
     % High level control -  Calculate u that depend on the field value
