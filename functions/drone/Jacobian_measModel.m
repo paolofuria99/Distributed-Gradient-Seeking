@@ -1,6 +1,12 @@
 function H = Jacobian_measModel(idx,drone,x)
-%JACOBIAN_MEASMODEL Summary of this function goes here
-%   Detailed explanation goes here
+%JACOBIAN_MEASMODEL Calculate the Jacobian of drones' measurement model to
+%linearize the non-linear model around the state of the robot
+% INPUTS:
+% idx -   Drone ID number
+% drone - Drones classes    
+% x -     Robot's state
+% OUTPUTS:
+% H -     Jacobian of measurement model
 
 for i = 1:drone(idx).N_neighbors
     for j = 1:3

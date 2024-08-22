@@ -135,6 +135,7 @@ classdef DRONE < matlab.mixin.Copyable
             %  Input:
             %   obj (DRONE):      Drone object
             %   x (2,iterations): Estimated position of target by the system of drones
+            %   index (1x1 int):  Iteration number
             %  Output:
             %   u (3x1 double):   Control input
             
@@ -143,41 +144,14 @@ classdef DRONE < matlab.mixin.Copyable
                 error('Index must be greater than 1 to compute direction.');
             end
 
-            %% Method 1) The drones move along the direction of two consecutive drone's state estimates
+            %% The drones move along the direction of two consecutive robot's state estimates
             direction = [x(1,index)-x(1,index-1), x(2,index)-x(2,index-1), 0]; % Eventualmente far variare la z randomicamente aggiungendo un rumore
             direction_norm = norm(direction);
-            distance = sqrt((x(1,index)-obj.q_real(1))^2+(x(2,index)-obj.q_real(2))^2+(0-obj.q_real(3))^2);
-            if norm(obj.Delta_x(:,index)) < 1
-                u_lim = 1;
-                u = direction./direction_norm;
-                u = u_lim.*u;
-                u = u';
-                % if (distance >= 20)
-                %     u_lim = 1;
-                %     u = direction./direction_norm;
-                %     u = u_lim.*u;
-                %     u = u';
-                % elseif (distance >= 10)
-                %     u_lim = 1;
-                %     u = direction./direction_norm;
-                %     u = u_lim.*u;
-                %     u = u';
-                % elseif distance < 10
-                %     u = [0;0;0];
-                % else
-                %     u = [0;0;0];
-                % end
-            else
-                u = [0;0;0];
-            end
-
-            %% Method 2)
-            % direction = [x(1,index)-x(1,index-1), x(2,index)-x(2,index-1), 0];
-            % direction_norm = norm(direction);
-            % u_lim = 5*obj.params.dt;
-            % u = direction./direction_norm;
-            % u = u_lim.*u;
-            % u = u';
+            
+            u_lim = 1.5;
+            u = direction./direction_norm;
+            u = u_lim.*u;
+            u = u';
 
         end
 
