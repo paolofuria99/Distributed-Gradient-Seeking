@@ -46,8 +46,7 @@ for idx = 1:params.N_agents
 end
 
 % Variables to calculate RMSE value
-diff_rd = 0; % between real pose and estimated pose by the drones
-diff_rk = 0; % between real pose and estimated pose by the robot's kalman filter
+diff = 0; % between real pose and estimated pose by the drones
 
 % Arrays to store outputs for plotting
 time = zeros(1, iterations);
@@ -105,6 +104,9 @@ for i = 1:iterations
         [x_est, P_est] = Drones_Update(params,i,drone);
         % Save values
         x_est_vals(:,i)=x_est; P_est_vals{i}=P_est;
+
+        % RMSE counter
+        diff = RMSE(robot.q_real,x_est,diff); % real pose minus estimate of drones  
     end
 
     % High level control -  Calculate u that depend on the field value
@@ -125,6 +127,8 @@ for i = 1:iterations
     % Stop the simulation if the robot reaches the peak
     if norm([params.x_max_peak;params.y_max_peak]'-q_ROBOT_est_vals(1:2,i)')<R_star
         iter_break = i;
+        % Root Mean Square Error: standard deviation of the residuals
+        RMSE = sqrt((1/iter_break)*diff); % [m] RMSE between real pose and estimated one by the drones
         break;
     end
 end
