@@ -62,17 +62,14 @@ classdef DRONE < matlab.mixin.Copyable
                     % Initialize the initial state covariance matrix
                     obj.P = eye(length(q)).*100;
 
-                    % Initialize the initial estimate of the robot by the
-                    % drone
+                    % Initialize the initial estimate of the robot 
                     obj.x_est = zeros(3,params.max_iter+1);
                     % Initialize the initial error of the robot's estimated
                     % position by the drone
                     obj.Delta_x = zeros(3,params.max_iter+1);
 
                     % Initialize the process noise
-                    % obj.Q = (randn(3,3)-0.5)*params.std_dyn_xy;
-                    % obj.Q = obj.Q*obj.Q';
-                    obj.Q = eye(3,3)*params.std_dyn_xy;
+                    obj.Q = (randn(3,3)-0.5)*params.std_dyn_xy;
                     obj.Q = obj.Q*obj.Q';
 
                     % Initialize number of neighbor drones
@@ -84,6 +81,7 @@ classdef DRONE < matlab.mixin.Copyable
                     % TDOA measurement model noise
                     obj.R = (rand(obj.N_neighbors)-0.5)*params.std_drones;
                     obj.R = obj.R*obj.R';
+
                     % Drone on/off
                     obj.Connection = 'on';
 
@@ -152,7 +150,7 @@ classdef DRONE < matlab.mixin.Copyable
             u_lim = 1.5;
             % Move up with velocity u_z if the height becomes less than a threshold
             z_min = 1;
-            u_z = 10;
+            u_z = 5;
             if obj.q_real(3) < z_min
                 u = direction./direction_norm;
                 u = [u_lim.*u(1:2),u_z];
@@ -187,12 +185,10 @@ classdef DRONE < matlab.mixin.Copyable
             % This function calculates the noise on the TDOA measurement 
             % model of each drone based on its number of neighboring drones
             %  Input:
-            %   obj (DRONE):                    Drone object
+            %   obj (DRONE):  Drone object
 
-            % obj.R = (rand(obj.N_neighbors)-0.5)*obj.params.std_drones;
-            % obj.R = obj.R*obj.R';
-            obj.R = ones(obj.N_neighbors)*obj.params.std_drones^2;
-            obj.R = obj.R - (obj.params.std_drones^2)/2 * (ones(obj.N_neighbors)-eye(obj.N_neighbors));
+            obj.R = (rand(obj.N_neighbors)-0.5)*obj.params.std_drones;
+            obj.R = obj.R*obj.R';
 
         end
 
