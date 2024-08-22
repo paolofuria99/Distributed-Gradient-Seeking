@@ -215,6 +215,27 @@ title('Field Values');
 grid on;
 hold off
 
+%% Plot v_star values if control algorithm selected is Matveev-v3
+if params.control_alg=='Matveev-v3'
+    % fit the values
+    p = polyfit(time(1:iter_break),v_star_ROBOT_vals(1:iter_break),2);
+    y_fit = polyval(p,time(1:iter_break));
+
+    kfig=kfig+1;
+    figure(kfig);
+    plot(time(1:iter_break), v_star_ROBOT_vals(1:iter_break),'DisplayName','Real values')
+    hold on;
+    plot(time(1:iter_break), y_fit, 'r-', 'DisplayName','Fitted values'); % Fitted curve in red
+    grid on;
+    xlabel('Time [s]');
+    ylabel('$v^*$ [-]');
+    title('$v^*$ Values');
+    legend('Interpreter', 'latex', 'Location', 'Best');
+    grid on;
+    hold off
+
+end
+
 %% =============FUNCTIONS===============
 %% Useful functions for plotting purposes
 function plot_ellipse(x, y, P, conf, color)
