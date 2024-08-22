@@ -3,30 +3,63 @@
 kfig=0;
 
 %% Animate the simulation
+GIF=0;
 if ANIMATE
-    kfig=kfig+1;
+    kfig = kfig + 1;
     figure(kfig);
+    %set(gcf, 'WindowState', 'maximized');
+    set(gcf, 'Position', [100 100 1200 720]);
     hold on;
-    axis([-params.ENV_SIZE, params.ENV_SIZE, -params.ENV_SIZE,  params.ENV_SIZE]);
+    axis([-params.ENV_SIZE, params.ENV_SIZE, -params.ENV_SIZE, params.ENV_SIZE]);
     xlabel('X');
     ylabel('Y');
     title('Unicycle Robot Gradient Descent to Find Gaussian Peak');
-    grid on;
-    contour(X, Y, Z, 30);
+    contour(X, Y, Z, 30);  % Create the contour plot
     colorbar;
+    grid on;
+    
+    % Preallocate plot handles for the trajectories
+    h_real_traj = plot(NaN, NaN, 'b-', 'LineWidth', 2, 'DisplayName', 'Robot Real Traj.');
+    h_est_traj = plot(NaN, NaN, 'r--', 'LineWidth', 2, 'DisplayName', 'Robot Est Traj.');
+    
+    % Specify the filename for the GIF
+    filename = 'unicycle_robot_gradient_descent.gif';
+    
+    % Initialize the GIF creation process
+    first_frame = true;
     
     for i = 1:length(time(1:iter_break))
+        % Update the trajectories
+        set(h_real_traj, 'XData', q_ROBOT_real_vals(1, 1:i), 'YData', q_ROBOT_real_vals(2, 1:i));
+        set(h_est_traj, 'XData', q_ROBOT_est_vals(1, 1:i), 'YData', q_ROBOT_est_vals(2, 1:i));
+        
+        % Plot the agent and keep the handle
         agent = robot.PlotAgent(q_ROBOT_real_vals(:,i));
-        %drone = drone.PlotDrone2(q_ROBOT_real_vals(1:2,i));
-        plot(q_ROBOT_real_vals(1, 1:i), q_ROBOT_real_vals(2, 1:i), 'b-', 'LineWidth', 2);
-        plot(q_ROBOT_est_vals(1, 1:i), q_ROBOT_est_vals(2, 1:i), 'r--', 'LineWidth', 2);
-        pause(dt);
+        
+        % Redraw the plot only every few iterations or after significant changes
+        if mod(i, 3) == 0 || i == length(time(1:iter_break))
+            drawnow;
+            if GIF
+                % Capture the plot as a frame
+                frame = getframe(kfig);
+                im = frame2im(frame);
+                [imind, cm] = rgb2ind(im, 256);
+                
+                % Write to the GIF file
+                if first_frame
+                    imwrite(imind, cm, filename, 'gif', 'Loopcount', inf, 'DelayTime', 0.1);
+                    first_frame = false;  % Update to indicate that the first frame is done
+                else
+                    imwrite(imind, cm, filename, 'gif', 'WriteMode', 'append', 'DelayTime', 0.1);
+                end
+            end
+        end
+        
+        % Only delete the agent handle if necessary
         if ishandle(agent)
             delete(agent);
         end
-    end    
-    
-
+    end
 end
 
 %% Plot x,y,theta coordinates of the robot, the real and the estimated one with the errors
@@ -164,9 +197,12 @@ figure(kfig);
 hold on;
 plot(time(1:iter_break), sigma2_xx, 'Color', 'r', 'DisplayName', '$\sigma_{xx}^2$');
 plot(time(1:iter_break), sigma2_yy, 'Color', 'b', 'DisplayName', '$\sigma_{yy}^2$');
-plot(time(1:iter_break), sigma2_tt, 'Color', 'g', 'DisplayName', '$\sigma_{\theta\theta}^2$');
+ylabel("$\sigma_{xx}^2$,$\sigma_{yy}^2$ [$m^2$]",'Interpreter','latex')
+yyaxis right
+plot(time(1:iter_break), sigma2_tt, 'Color', "#EDB120", 'DisplayName', '$\sigma_{\theta\theta}^2$');
+ylabel('$\sigma_{\theta\theta}^2$ [$rad^2$]','Interpreter','latex')
 xlabel('Time [s]');
-ylabel('Covariance Matrix Diagonal Elements');
+title('Robot P Covariance Matrix Diagonal Elements');
 legend('Interpreter', 'latex', 'Location', 'best');
 grid on;
 hold off;
