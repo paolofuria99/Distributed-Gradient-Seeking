@@ -145,13 +145,23 @@ classdef DRONE < matlab.mixin.Copyable
             end
 
             %% The drones move along the direction of two consecutive robot's state estimates
-            direction = [x(1,index)-x(1,index-1), x(2,index)-x(2,index-1), 0]; % Eventualmente far variare la z randomicamente aggiungendo un rumore
+            direction = [x(1,index)-x(1,index-1), x(2,index)-x(2,index-1), 0];
             direction_norm = norm(direction);
-            
+
+            % Limiting velocity
             u_lim = 1.5;
-            u = direction./direction_norm;
-            u = u_lim.*u;
-            u = u';
+            % Move up with velocity u_z if the height becomes less than a threshold
+            z_min = 1;
+            u_z = 1;
+            if obj.q_real(3) < z_min
+                u = direction./direction_norm;
+                u = [u_lim.*u(1:2),u_z];
+                u = u';
+            else
+                u = direction./direction_norm;
+                u = u_lim.*u;
+                u = u';
+            end
 
         end
 
