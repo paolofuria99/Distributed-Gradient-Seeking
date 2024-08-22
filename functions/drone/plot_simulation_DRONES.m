@@ -56,20 +56,19 @@ title('Graph Representation of Connections');
 theta = linspace(0, 2*pi, 100);
 circle_x = params.radius*cos(theta);
 circle_y = params.radius*sin(theta);
+figure
+hold on
+h(1) = plot(circle_x, circle_y, 'k--', 'DisplayName','Drones initialization region');
+contour(X, Y, Z, 30, 'DisplayName','Scalar Field')
+colorbar
+h(2) = plot(q_ROBOT_est_vals(1,1:iter_break), q_ROBOT_est_vals(2,1:iter_break), 'k--', 'LineWidth', 1.5, 'DisplayName','Robot Est Trajectory');
+h(3) = plot(q_ROBOT_real_vals(1,1:iter_break), q_ROBOT_real_vals(2,1:iter_break), 'b-', 'LineWidth', 1.5, 'DisplayName','Robot Real Trajectory');
+h(4) = plot(drone(1).x_est(1,1:iter_break), drone(1).x_est(2,1:iter_break), 'ro','LineWidth', 0.1, 'DisplayName',"TDOA-based Est");
 for idx = 1:params.N_agents
-    figure
-    hold on
-    h(1) = plot(circle_x, circle_y, 'k--', 'DisplayName','Drones initialization region');
-    contour(X, Y, Z, 30, 'DisplayName','Scalar Field')
-    colorbar
-    h(2) = plot(q_ROBOT_est_vals(1,1:iter_break), q_ROBOT_est_vals(2,1:iter_break), 'k--', 'LineWidth', 1.5, 'DisplayName','Robot Est Trajectory');
-    h(3) = plot(q_ROBOT_real_vals(1,1:iter_break), q_ROBOT_real_vals(2,1:iter_break), 'b-', 'LineWidth', 1.5, 'DisplayName','Robot Real Trajectory');
     drone(idx).PlotDrone(drone(idx).q_init);
-    h(4) = plot(drone(idx).x_est(1,1:iter_break), drone(idx).x_est(2,1:iter_break), 'ro','LineWidth', 0.1, 'DisplayName',sprintf("Est. Drone %d",idx));
-    % scatter(drone(idx).x_est(1,1:iter_break), drone(idx).x_est(2,1:iter_break), 'Marker','o','LineWidth', 0.1);
-    xlabel('X Coordinate')
-    ylabel('Y Coordinate')
-    title('Unicycle Robot Trajectory with ESC')
-    legend(h(1:4),'Location','best')
-    grid on
 end
+xlabel('X Coordinate')
+ylabel('Y Coordinate')
+title('Unicycle Robot Trajectory with ESC')
+legend(h(1:4),'Location','best')
+grid on
