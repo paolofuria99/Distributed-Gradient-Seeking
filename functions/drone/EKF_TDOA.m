@@ -1,6 +1,13 @@
-function IEKF(drone,idx,i,x)
-%EFK_TDOA Summary of this function goes here
-%   Detailed explanation goes here
+function EKF_TDOA(drone,idx,i,x)
+%EFK_TDOA Estimation of robot's state through Extended Kalman Filter
+% INPUTS:
+% drone - Drones classes
+% idx -   Drone ID number
+% i -     Iteration number
+% x -     Real pose of robot
+
+% Flag to enable linear correction of the estimated state from the EKF
+correction = false;
 
 if drone(idx).Connection == "on"
     % Extrapolate necessary parameters / EKF inputs
@@ -29,16 +36,19 @@ if drone(idx).Connection == "on"
     P = (eye(3) - K * H) * P_dyn * (eye(3) - K * H)' + K * R * K';
     
     %% 3) Linear correction to estimated state
-    % Linearize around current estimated state
-    % H = Jacobian_measModel(idx,drone,x_est);
-    % WLS_matrix = (H' * (R \ H));
-    % lambda = 1e-10;                       % Regularization parameter
-    % reg = lambda * eye(size(WLS_matrix)); % Regularization term
-    % WLS_matrix = WLS_matrix + reg;
-    % Delta_x = -inv(WLS_matrix) * (H' / R) * (TimeDifferenceOfArrival(idx,x,drone) - TimeDifferenceOfArrival(idx,x_est,drone))';
-    % % Update the drone's error
-    % drone(idx).Delta_x(:,i) = Delta_x;
-    % x_est = x_est - Delta_x;
+    % Flag to enable linear correction of the estimated state from the EKF
+    if correction == true
+        % Linearize around current estimated state
+        H = Jacobian_measModel(idx,drone,x_est);
+        WLS_matrix = (H' * (R \ H));
+        lambda = 1e-10;                       % Regularization parameter
+        reg = lambda * eye(size(WLS_matrix)); % Regularization term
+        WLS_matrix = WLS_matrix + reg;
+        Delta_x = -inv(WLS_matrix) * (H' / R) * (TimeDifferenceOfArrival(idx,x,drone) - TimeDifferenceOfArrival(idx,x_est,drone))';
+        % Update the drone's error
+        drone(idx).Delta_x(:,i) = Delta_x;
+        x_est = x_est - Delta_x;
+    end
 else
     % Keep the last estimate
     x_est = drone(idx).x_est(:,i);
@@ -48,6 +58,5 @@ end
 %% Update the drone's measurements and covariance matrix/ EKF outputs
 drone(idx).P = P;
 drone(idx).x_est(:,i+1) = x_est;
-% fprintf("Drone %d: %g %g %g\n",idx,x_est);
 
 end

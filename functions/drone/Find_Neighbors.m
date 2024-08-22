@@ -1,14 +1,16 @@
 function neighbors = Find_Neighbors(params,drone)
 %FIND_NEIGHBORS This function finds all neighbors for each drone based on
 %their relative distance
-%   Detailed explanation goes here
+% INPUTS:
+% params -    Parameters of the simulation
+% drone -     Drones classes
+% OUTPUTS:
+% neighbors - Cell with list of neighbors for each drone
 
 % Number of drones within the environment
 n = params.N_agents;
-% [m] Define radius to find neighbors based on the environment and number
-% of drones within it
+% [m] Define radius to find neighbors
 r = 40;
-% r = params.radius/2 + randi([params.N_min_agents params.N_agents]);
 % Variable to store neighbors
 neighbors = cell(n,1);
 

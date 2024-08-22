@@ -1,11 +1,13 @@
 %% init
 
 tolerance = 1e-2;
-x_max = params.x_max_peak;   % x-coordinate of the maximum point
-y_max = params.y_max_peak;   % y-coordinate of the maximum point
+x_max = params.x_max_peak; % x-coordinate of the maximum point
+y_max = params.y_max_peak; % y-coordinate of the maximum point
+% Chosen linear and angular velocities
 v = params.MAX_LIN_VEL/params.dt; 
-w = params.MAX_ANG_VEL/params.dt;      % Choosen linear and angular velocities
-R = v/w;                     % Robot maximum turning radius
+w = params.MAX_ANG_VEL/params.dt; 
+% Robot maximum turning radius
+R = v/w;                          
 
 %% Calculate gamma* and R**
 

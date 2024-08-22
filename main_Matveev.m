@@ -5,25 +5,25 @@ init
 parameters
 
 %% Simulation parameters and simulation initialization
-dt = params.dt;                     % [s] - time step
-iterations = params.max_iter;       % [#] - number of iteration
-T = iterations/dt;                  % [s] - simulation duration
-ANIMATE=0;
-PLOT_ERROR_ELLIPSES=1;
-MISSING_MEASUREMENT_ITER=[100:1:150];        % [-] - Array of values for which is simulated missing measurement 100:1:150
-WITH_DRONES=0;                      % [-] - Simulation with drones (otherwise with simple gps)
+dt = params.dt;                       % [s] - Time step
+iterations = params.max_iter;         % [#] - Maximum number of iterations
+T = iterations/dt;                    % [s] - Simulation duration
+ANIMATE = 0;                          % [-] - Flag to enable animation visualisation
+PLOT_ERROR_ELLIPSES = 1;              % [-] - Flag to enable the plot of error ellipses
+MISSING_MEASUREMENT_ITER = 100:1:150; % [-] - Array of values for which is simulated missing measurement 100:1:150
+WITH_DRONES = 1;                      % [-] - Flag to enable simulation with drones (otherwise with simple gps)
 
 % Environment/Field definition
 environment;
 
 % According to Matveev paper, make hypotesis regarding the field and check
 % robot parameters
-R_star = 3;                         % [m] - Desired distance of arrival from the maximum point of the field
-q_minus = 5;                        % [-] - Lower bound of the intensity of the field
-sigma2_minus = 100;               % [m^2] - Lower limit of the field variance
-sigma2_plus = 500;                % [m^2] - Upper limit of the field variance
-R_est = 9;                        % [m] - Estimated started distance from the field center
-checkMatveevCond;                 % Checking Matveev parameters
+R_star = 3;         % [m]   - Desired distance of arrival from the maximum point of the field
+q_minus = 5;        % [-]   - Lower bound of the intensity of the field
+sigma2_minus = 100; % [m^2] - Lower limit of the field variance
+sigma2_plus = 500;  % [m^2] - Upper limit of the field variance
+R_est = 9;          % [m]   - Estimated started distance from the field center
+checkMatveevCond;   % Checking Matveev parameters
 
 % Start Simulation ?
 fprintf('\nPress any key to continue or "q" to quit:');
@@ -97,7 +97,7 @@ for i = 1:iterations
     
         % Estimate robot position through TDOA measurements
         for idx = 1:params.N_agents
-            IEKF(drone,idx,i,[robot.q_real(1:2);0]);
+            EKF_TDOA(drone,idx,i,[robot.q_real(1:2);0]);
         end
         % Update the estimated robot's position and the estimated covariance
         % matrix inside drone class

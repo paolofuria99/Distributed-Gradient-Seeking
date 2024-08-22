@@ -1,6 +1,9 @@
 function drone_pose = Drone_Init(params)
 %DRONE_INIT Initialize the position of the drones within the environment
-%   Detailed explanation goes here
+% INPUTS:
+% params -     Parameters of the simulation
+% OUTPUTS:
+% drone_pose - Matrix with initial position of the drones
 
 % Center of environment
 xc = [0;0;0];
@@ -8,10 +11,6 @@ xc = [0;0;0];
 r = params.radius;
 % Number of drones within the environment
 n = params.N_agents;
-% % [m] Maximum height for each drone
-% z0_max = 3; 
-% % [m] Maximum deviation from z0_max
-% z_offset = 1; 
 % Minimum distance between drones
 min_distance = 20;
 
@@ -26,7 +25,6 @@ for idx = 1:n
         x0 = xc(1) + distance * cos(angle);
         y0 = xc(2) + distance * sin(angle);
         z0 = xc(3) + rand*params.ENV_SIZE/3;
-        % z0 = xc(3) + z0_max - z_offset*rand;
 
         if idx == 1
             initialization = true;
