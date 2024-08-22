@@ -117,7 +117,7 @@ for i = 1:iterations
         elseif i > 1
             for idx = 1:params.N_agents
                 % High level control - Calculate u to move the drones
-                u_drone = drone(idx).compute_control(q_ROBOT_real_vals,i);
+                u_drone = drone(idx).compute_control(x_est_vals,i);
                 % Low level control - Actuate the drones based on the calculated controls
                 drone(idx).dynamics(u_drone);
                 % Extract the real pose of the drones
