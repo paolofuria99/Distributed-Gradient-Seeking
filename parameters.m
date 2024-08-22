@@ -7,7 +7,7 @@ params = struct(...
     'y_max_peak',    5,                       ...    % [m]     For simulation purposes, y-peak coordinate
     'ENV_SIZE',      60,                      ...    % [m]     Size of the environment
     'ENV_STEP',      200,                     ...    % [-]     Number of steps for the environment
-    'q0',            [-30, 30, deg2rad(30)],  ...    % [m]   Initial position and orientation of the agent      ROBOT PARAMS
+    'q0',            [-25, 25, deg2rad(30)],  ...    % [m]   Initial position and orientation of the agent      ROBOT PARAMS
     'control_alg',   'Matveev-v1',            ...    % [-]     Control algorithm.  
     'MAX_LIN_VEL',   0.7,                     ...    % [m/s]   Maximum linear velocity of the agent 5
     'MAX_ANG_VEL',   0.8,                     ...    % [rad/s] Maximum angular velocity of the agent 3
