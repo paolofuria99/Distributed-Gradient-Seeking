@@ -152,7 +152,7 @@ classdef DRONE < matlab.mixin.Copyable
             u_lim = 1.5;
             % Move up with velocity u_z if the height becomes less than a threshold
             z_min = 1;
-            u_z = 1;
+            u_z = 10;
             if obj.q_real(3) < z_min
                 u = direction./direction_norm;
                 u = [u_lim.*u(1:2),u_z];
