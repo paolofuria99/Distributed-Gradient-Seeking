@@ -164,9 +164,12 @@ figure(kfig);
 hold on;
 plot(time(1:iter_break), sigma2_xx, 'Color', 'r', 'DisplayName', '$\sigma_{xx}^2$');
 plot(time(1:iter_break), sigma2_yy, 'Color', 'b', 'DisplayName', '$\sigma_{yy}^2$');
-plot(time(1:iter_break), sigma2_tt, 'Color', 'g', 'DisplayName', '$\sigma_{\theta\theta}^2$');
+ylabel("$\sigma_{xx}^2$,$\sigma_{yy}^2$ [$m^2$]",'Interpreter','latex')
+yyaxis right
+plot(time(1:iter_break), sigma2_tt, 'Color', "#EDB120", 'DisplayName', '$\sigma_{\theta\theta}^2$');
+ylabel('$\sigma_{\theta\theta}^2$ [$rad^2$]','Interpreter','latex')
 xlabel('Time [s]');
-ylabel('Covariance Matrix Diagonal Elements');
+title('Robot P Covariance Matrix Diagonal Elements');
 legend('Interpreter', 'latex', 'Location', 'best');
 grid on;
 hold off;
