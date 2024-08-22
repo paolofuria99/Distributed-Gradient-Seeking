@@ -59,6 +59,7 @@ D_ROBOT_vals = zeros(1, iterations);                        % [-] - ROBOT Field 
 k_ROBOT_vals = zeros(1, iterations);                        % [-] - ROBOT Field Curvature values
 P_ROBOT_vals = cell(1, iterations);                         % [-] - ROBOT Covariance values
 dw_ROBOT_vals = zeros(1,iterations);
+v_star_ROBOT_vals = zeros(1,iterations);
 
 q_real_drones_vals = zeros(3,iterations,params.N_agents);   % [m, m] - DRONE Real pose of the drones
 x_est_vals = zeros(3,iterations);                           % [-] - DRONE Estimated state of robot
@@ -109,7 +110,7 @@ for i = 1:iterations
     % High level control -  Calculate u that depend on the field value
     u = robot.compute_control();
     % Save control vals
-    v_ROBOT_vals(i)=u(1); w_ROBOT_vals(i)=u(2); dw_ROBOT_vals(i)=robot.dw;
+    v_ROBOT_vals(i)=u(1); w_ROBOT_vals(i)=u(2); dw_ROBOT_vals(i)=robot.dw; v_star_ROBOT_vals(i)=robot.v_star;
     
 
     % Low level control - Actuate the robot with the high level control and update the state based on the system state and GPS measurement
