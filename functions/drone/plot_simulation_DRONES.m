@@ -1,34 +1,34 @@
-% % Plot the circular region and drone positions
-% theta = linspace(0, 2*pi, 100);
-% circle_x = params.radius*cos(theta);
-% circle_y = params.radius*sin(theta);
-% figure;
-% hold on;
-% plot(circle_x, circle_y, 'k--', 'DisplayName','Drones initialization region');
-% axis([-params.ENV_SIZE, params.ENV_SIZE, -params.ENV_SIZE,  params.ENV_SIZE]);
-% xlabel('X');
-% ylabel('Y');
-% title('Unicycle Robot Gradient Descent to Find Gaussian Peak');
-% grid on;
-% %contourf(X, Y, D(X,Y), 50, 'LineStyle', 'none');
-% contour(X, Y, Z, 30);
-% colorbar;
-% for i = 1:length(time(1:iter_break))
-%     agent=robot.PlotAgent(q_ROBOT_real_vals(:,i));
-%     plot(q_ROBOT_real_vals(1, 1:i), q_ROBOT_real_vals(2, 1:i), 'b-', 'LineWidth', 2);
-%     for idx = 1:params.N_agents
-%         DRONE(idx) = drone(idx).PlotDrone(q_real_drones_vals(:,i,idx));
-%         plot(q_real_drones_vals(1,1:i,idx),q_real_drones_vals(2,1:i,idx), 'r-','LineWidth',1.5);
-%     end
-%     pause(dt);
-%     if ishandle(agent)
-%         delete(agent);
-%     end
-%     if ishandle(DRONE)
-%         delete(DRONE);
-%     end
-% end
-% scatter(drone(1).x_est(1,1:iter_break), drone(1).x_est(2,1:iter_break), 'Marker','o','LineWidth', 0.1);
+if ANIMATE_DRONES
+    % Plot the circular region and drone positions
+    theta = linspace(0, 2*pi, 100);
+    circle_x = params.radius*cos(theta);
+    circle_y = params.radius*sin(theta);
+    figure;
+    hold on;
+    plot(circle_x, circle_y, 'k--', 'DisplayName','Drones initialization region');
+    axis([-params.ENV_SIZE, params.ENV_SIZE, -params.ENV_SIZE,  params.ENV_SIZE]);
+    xlabel('X');
+    ylabel('Y');
+    title('Unicycle Robot Gradient Descent to Find Gaussian Peak');
+    grid on;
+    contour(X, Y, Z, 30);
+    colorbar;
+    for i = 1:length(time(1:iter_break))
+        agent=robot.PlotAgent(q_ROBOT_real_vals(:,i));
+        plot(q_ROBOT_real_vals(1, 1:i), q_ROBOT_real_vals(2, 1:i), 'b-', 'LineWidth', 2);
+        for idx = 1:params.N_agents
+            DRONE(idx) = drone(idx).PlotDrone(q_real_drones_vals(:,i,idx));
+            plot(q_real_drones_vals(1,1:i,idx),q_real_drones_vals(2,1:i,idx), 'r-','LineWidth',1.5);
+        end
+        pause(dt);
+        if ishandle(agent)
+            delete(agent);
+        end
+        if ishandle(DRONE)
+            delete(DRONE);
+        end
+    end
+end
 
 % Initialize empty arrays for edges
 sourceNodes = [];
