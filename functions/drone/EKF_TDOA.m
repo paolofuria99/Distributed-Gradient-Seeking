@@ -9,12 +9,12 @@ function EKF_TDOA(drone,idx,i,x)
 % Flag to enable linear correction of the estimated state from the EKF
 correction = false;
 
-if drone(idx).Connection == "on"
+if drone(idx).Connection{i} == "on"
     % Extrapolate necessary parameters / EKF inputs
     P = drone(idx).P;
     x_est = drone(idx).x_est(:,i);
     Q = drone(idx).Q;
-    noise = MeasurementNoise(drone(idx));
+    noise = MeasurementNoise(drone(idx),i);
     R = drone(idx).R;
     
     %% 1) Prediction
@@ -52,7 +52,7 @@ if drone(idx).Connection == "on"
 else
     % Keep the last estimate
     x_est = drone(idx).x_est(:,i);
-    P = drone(idx).P;
+    P = drone(idx).P + drone(idx).Q;
 end
 
 %% Update the drone's measurements and covariance matrix/ EKF outputs
