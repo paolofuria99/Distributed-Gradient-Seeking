@@ -2,7 +2,13 @@ function [x_est, P_est] = Drones_Update(params,i,drone)
 %DRONES_UPDATE This function computes the average estimated state of the
 %robot and the average estimated covariance matrix and assigns them to the
 %classes that identify each drone in the system
-%   Detailed explanation goes here
+% INPUTS:
+% params -     Parameters of the simulation
+% i -          Iteration number
+% drone -      Drones classes
+% OUTPUTS:
+% x_est -      Robot's estimated state from weighted-averaging consensus
+% P_est -      Estimated covariance matrix from weighted-averaging consensus
 
 % Iterate weighted-averaging between estimated state by the drones until
 % convergence is reached and all drones agree on the same estimate
@@ -16,7 +22,7 @@ for index = 1:100
     x_est_counter = zeros(3,params.N_agents);
     P_counter = zeros(3,3,params.N_agents);
     for j = 1:params.N_agents
-        if drone(j).Connection == "on"
+        if drone(j).Connection{i} == "on"
             % Weight of drone j
             w_jj(j) = drone(j).N_neighbors;
             x_est_counter(:,j) = w_jj(j)*drone(j).x_est(:,i+1);
@@ -41,7 +47,7 @@ for index = 1:100
     % Assign weighted average of robot's estimated state and covariance matrix
     % to each drone
     for j = 1:params.N_agents
-        if drone(j).Connection == "on"
+        if drone(j).Connection{i} == "on"
             drone(j).x_est(:,i+1) = x_est_average(:,j);
             drone(j).P = P_est_average(:,:,j);
         end

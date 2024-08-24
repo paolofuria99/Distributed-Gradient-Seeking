@@ -1,6 +1,6 @@
 function Drone_OnOff(idx,drone,i)
-%DRONE_ONOFF This function disables the functioning of all drones that do
-%not communicate with other drones
+%DRONE_ONOFF Disable the functioning of all drones that do not communicate 
+% with other drones
 % INPUTS:
 % idx -   Drone ID number
 % drone - Drones classes
