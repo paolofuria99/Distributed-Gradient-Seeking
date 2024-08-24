@@ -1,4 +1,4 @@
-function Drone_OnOff(idx,drone)
+function Drone_OnOff(idx,drone,i)
 %DRONE_ONOFF This function disables the functioning of all drones that do
 %not communicate with other drones
 % INPUTS:
@@ -6,9 +6,10 @@ function Drone_OnOff(idx,drone)
 % drone - Drones classes
 
 if drone(idx).N_neighbors == 0
-    drone(idx).Connection = "off";
+    drone(idx).Connection{i} = "off";
+    fprintf("Drone %d lost connection!!\n",idx);
 else
-    drone(idx).Connection = "on";
+    drone(idx).Connection{i} = "on";
 end
 
 end
