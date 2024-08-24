@@ -9,6 +9,7 @@ dt = params.dt;                       % [s] - Time step
 iterations = params.max_iter;         % [#] - Maximum number of iterations
 T = iterations/dt;                    % [s] - Simulation duration
 ANIMATE = 0;                          % [-] - Flag to enable animation visualisation
+ANIMATE_DRONES = 0;                   % [-] - Flag to enable drone movements animation visualisation
 PLOT_ERROR_ELLIPSES = 1;              % [-] - Flag to enable the plot of error ellipses
 MISSING_MEASUREMENT_ITER = 100:1:150; % [-] - Array of values for which is simulated missing measurement 100:1:150
 WITH_DRONES = 1;                      % [-] - Flag to enable simulation with drones (otherwise with simple gps)
@@ -90,9 +91,9 @@ for i = 1:iterations
             % Assign neighboring drones
             drone(idx).neighbors = neighbors{idx};
             % Check for drones without neighbors and disable them
-            Drone_OnOff(idx,drone);
+            Drone_OnOff(idx,drone,i);
             % Update measurement noise matrix based on number of neighboring drones
-            ComputeMeasNoiseMatrix(drone(idx));
+            drone(idx).ComputeMeasNoiseMatrix();
         end
     
         % Estimate robot position through TDOA measurements
@@ -130,7 +131,6 @@ for i = 1:iterations
     u = robot.compute_control();
     % Save control vals
     v_ROBOT_vals(i)=u(1); w_ROBOT_vals(i)=u(2); dw_ROBOT_vals(i)=robot.dw; v_star_ROBOT_vals(i)=robot.v_star;
-    
 
     % Low level control - Actuate the robot with the high level control and update the state based on the system state and GPS measurement
     if WITH_DRONES
