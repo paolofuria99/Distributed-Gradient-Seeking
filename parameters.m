@@ -16,6 +16,7 @@ params = struct(...
     'WHEEL_RADIUS',  0.01,                    ...    % [m]     Wheel radius
     'AXLE_LENGTH',   0.05,                    ...    % [m]     Inter-Axle length
     'std_dyn_xy',    0.5,                     ...    % [m]     Standard deviation of the dynamic noise
+    'std_dyn_xyz',   0.1,                     ...    % [m]     Standard deviation of the dynamic noise of the drones
     'std_dyn_theta', 1*(pi/180),              ...    % [rad]   Standard deviation of the dynamic noise
     'std_gps',       5,                       ...    % [m]     Standard deviation of the GPS noise
     'N_agents',      3,                       ...    % [-]     Number of agents'                                    DRONES PARAMS
