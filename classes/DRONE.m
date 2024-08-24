@@ -69,7 +69,7 @@ classdef DRONE < matlab.mixin.Copyable
                     obj.Delta_x = zeros(3,params.max_iter+1);
 
                     % Initialize the process noise
-                    obj.Q = (randn(3,3)-0.5)*params.std_dyn_xy;
+                    obj.Q = (randn(3,3)-0.5)*params.std_dyn_xyz;
                     obj.Q = obj.Q*obj.Q';
 
                     % Initialize number of neighbor drones
@@ -83,7 +83,7 @@ classdef DRONE < matlab.mixin.Copyable
                     obj.R = obj.R*obj.R';
 
                     % Drone on/off
-                    obj.Connection = 'on';
+                    obj.Connection = cell(1,params.max_iter);
 
                 otherwise
                     error('Unknown drone type');
@@ -107,9 +107,9 @@ classdef DRONE < matlab.mixin.Copyable
                     % q_new = A*q_old + B*u + noise
                     
                     % Equation form:
-                    % x_new = x_old + vx*dt 
-                    % y_new = y_old + vy*dt 
-                    % z_new = z_old
+                    % x_new = x_old + vx*dt + wx
+                    % y_new = y_old + vy*dt + wy
+                    % z_new = z_old + wz
 
                     % True Dynamics with noise
                     q_old = obj.q_real;
@@ -147,10 +147,10 @@ classdef DRONE < matlab.mixin.Copyable
             direction_norm = norm(direction);
 
             % Limiting velocity
-            u_lim = 1.5;
+            u_lim = 1;
             % Move up with velocity u_z if the height becomes less than a threshold
             z_min = 1;
-            u_z = 5;
+            u_z = 10;
             if obj.q_real(3) < z_min
                 u = direction./direction_norm;
                 u = [u_lim.*u(1:2),u_z];
@@ -192,7 +192,7 @@ classdef DRONE < matlab.mixin.Copyable
 
         end
 
-        function measurement_noise = MeasurementNoise(obj)
+        function measurement_noise = MeasurementNoise(obj,i)
             %MEASUREMENTNOISE Noise on the TDOA measurement model
             % This function defines the noise on the TDOA measurement model of each drone
             %  Input:
@@ -200,7 +200,7 @@ classdef DRONE < matlab.mixin.Copyable
             %  Output:
             %   measurement_noise (Nx1 double): Noise on TDOA measurements
             
-            if obj.Connection == "on"
+            if obj.Connection{i} == "on"
                 measurement_noise = mvnrnd(zeros(size(obj.R,1),1),obj.R);
             end
 
