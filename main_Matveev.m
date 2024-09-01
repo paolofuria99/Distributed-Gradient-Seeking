@@ -151,6 +151,10 @@ for i = 1:iterations
 end
 iter_break = i;
 
+% Calculate the norm of estimation error before and after consensus
+[error,error_consensus] = EstError(params,iter_break,drone,q_ROBOT_real_vals,x_est_vals);
+
+
 %% Plotting results
 plot_simulation;
 if WITH_DRONES plot_simulation_DRONES; end
