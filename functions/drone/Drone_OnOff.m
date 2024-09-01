@@ -4,6 +4,7 @@ function Drone_OnOff(idx,drone,i)
 % INPUTS:
 % idx -   Drone ID number
 % drone - Drones classes
+% i -     Iteration number
 
 if drone(idx).N_neighbors == 0
     drone(idx).Connection{i} = "off";

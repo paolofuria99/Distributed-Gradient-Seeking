@@ -58,5 +58,6 @@ end
 %% Update the drone's measurements and covariance matrix/ EKF outputs
 drone(idx).P = P;
 drone(idx).x_est(:,i+1) = x_est;
+drone(idx).x_est_EKF(:,i+1) = x_est;
 
 end

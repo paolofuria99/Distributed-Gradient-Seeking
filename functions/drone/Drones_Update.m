@@ -3,12 +3,12 @@ function [x_est, P_est] = Drones_Update(params,i,drone)
 %robot and the average estimated covariance matrix and assigns them to the
 %classes that identify each drone in the system
 % INPUTS:
-% params -     Parameters of the simulation
-% i -          Iteration number
-% drone -      Drones classes
+% params - Parameters of the simulation
+% i -      Iteration number
+% drone -  Drones classes
 % OUTPUTS:
-% x_est -      Robot's estimated state from weighted-averaging consensus
-% P_est -      Estimated covariance matrix from weighted-averaging consensus
+% x_est -  Robot's estimated state from weighted-averaging consensus
+% P_est -  Estimated covariance matrix from weighted-averaging consensus
 
 % Iterate weighted-averaging between estimated state by the drones until
 % convergence is reached and all drones agree on the same estimate
