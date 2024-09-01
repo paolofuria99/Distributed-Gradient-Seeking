@@ -72,3 +72,15 @@ ylabel('Y Coordinate')
 title('Unicycle Robot Trajectory with ESC')
 legend(h(1:4),'Location','best')
 grid on
+
+% Plot norm on estimation error before and after consensus
+figure;
+for idx = 1:params.N_agents
+    h(idx) = plot(1:iter_break,error(:,:,idx),"LineWidth",0.1,"DisplayName",sprintf("Drone %d est.",idx));
+    hold on;
+end
+h(params.N_agents+1) = plot(1:iter_break,error_consensus,"-k","LineWidth",1.5,"DisplayName","consensus est.");
+xlabel("iteration");
+ylabel("$||\tilde{x}||$");
+legend(h);
+title("Norm of estimation error before and after consensus");
