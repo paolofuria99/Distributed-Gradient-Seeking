@@ -14,7 +14,8 @@ classdef DRONE < matlab.mixin.Copyable
         P                   % []            (3x3 double)                     Covariance matrix of the state
 
         % Estimated state of the robot by the drone
-        x_est               % [m;m;m]       (3xiterations double)            Estimated state of the robot by the drone
+        x_est               % [m;m;m]       (3xiterations double)            Estimated state of the robot by the drone from the consensus
+        x_est_EKF           % [m;m;m]       (3xiterations double)            Estimated state of the robot by the drone from the EKF
 
         % Error between estimate and robot's real position
         Delta_x             % [m;m;m]       (3xiterations double)            Error in drone's estimate
@@ -64,6 +65,7 @@ classdef DRONE < matlab.mixin.Copyable
 
                     % Initialize the initial estimate of the robot 
                     obj.x_est = zeros(3,params.max_iter+1);
+                    obj.x_est_EKF = zeros(3,params.max_iter+1);
                     % Initialize the initial error of the robot's estimated
                     % position by the drone
                     obj.Delta_x = zeros(3,params.max_iter+1);
@@ -151,14 +153,22 @@ classdef DRONE < matlab.mixin.Copyable
             % Move up with velocity u_z if the height becomes less than a threshold
             z_min = 1;
             u_z = 10;
-            if obj.q_real(3) < z_min
-                u = direction./direction_norm;
-                u = [u_lim.*u(1:2),u_z];
-                u = u';
-            else
-                u = direction./direction_norm;
-                u = u_lim.*u;
-                u = u';
+            if strcmp(obj.Connection,"on") == 1 % if the drone has updated estimates use them to compute controls; check for its height: if it becomes lower than the threshold, give a positive velocity in z
+                if obj.q_real(3) < z_min
+                    u = direction./direction_norm;
+                    u = [u_lim.*u(1:2),u_z];
+                    u = u';
+                else
+                    u = direction./direction_norm;
+                    u = u_lim.*u;
+                    u = u';
+                end
+            else % if the drone has no updated estimates give zero velocity commands, unless its height becomes lower than the threshold
+                if obj.q_real(3) < z_min
+                    u = [0;0;u_z];
+                else
+                    u = [0;0;0];
+                end
             end
 
         end
