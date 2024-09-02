@@ -6,9 +6,14 @@ function Drone_OnOff(idx,drone,i)
 % drone - Drones classes
 % i -     Iteration number
 
+% Flag to enable print of disconnected drones: 1 to print; 0 to do nothing
+PRINT_DISCONNECTIONS = 0;
+
 if drone(idx).N_neighbors == 0
     drone(idx).Connection{i} = "off";
-    fprintf("Drone %d lost connection!!\n",idx);
+    if PRINT_DISCONNECTIONS
+        fprintf("Drone %d lost connection!!\n",idx);
+    end
 else
     drone(idx).Connection{i} = "on";
 end
