@@ -11,7 +11,7 @@ params = struct(...
     'control_alg',   'Matveev-v1',            ...    % [-]     Control algorithm.  
     'MAX_LIN_VEL',   0.7,                     ...    % [m/s]   Maximum linear velocity of the agent 5
     'MAX_ANG_VEL',   0.8,                     ...    % [rad/s] Maximum angular velocity of the agent 3
-    'V_STAR',        0.04,                    ...    % [-]     Matveev main parameter
+    'V_STAR',        0.048,                   ...    % [-]     Matveev main parameter
     'AGENT_RADIUS',  1,                       ...    % [m]     Agent radius
     'WHEEL_RADIUS',  0.01,                    ...    % [m]     Wheel radius
     'AXLE_LENGTH',   0.05,                    ...    % [m]     Inter-Axle length
@@ -30,5 +30,3 @@ params = struct(...
 % Generate a number of drones between range [N_min_agents, N_max_agents]
 params.N_agents = randi([params.N_min_agents,params.N_max_agents]);
 
-%% Change the field D with these possible functions:
-% @(x,y) 18 * exp(-((x - (-20)).^2 + (y - (-18)).^2) / 600) - 10*exp(-((x-10).^2+(y-8).^2)/200)
