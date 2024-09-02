@@ -155,18 +155,18 @@ set(gcf, 'PaperPositionMode', 'auto');
 linkaxes([ax1,ax2,ax3,ax4,ax5,ax6],'x');
 
 %% Plot trajectory on the scalar field
-kfig=kfig+1;
-figure(kfig);
-hold on;
-contour(X, Y, Z, 30, 'DisplayName','Scalar Field');
-colorbar;
-plot(q_ROBOT_est_vals(1,1:iter_break), q_ROBOT_est_vals(2,1:iter_break), 'r--', 'LineWidth', 1.5, 'DisplayName','Robot Est Trajectory');
-plot(q_ROBOT_real_vals(1,1:iter_break), q_ROBOT_real_vals(2,1:iter_break), 'b-', 'LineWidth', 1.5, 'DisplayName','Robot Real Trajectory');
-xlabel('X Coordinate');
-ylabel('Y Coordinate');
-title('Unicycle Robot Trajectory with ESC');
-legend('Location','best');
-grid on;
+% kfig=kfig+1;
+% figure(kfig);
+% hold on;
+% contour(X, Y, Z, 30, 'DisplayName','Scalar Field');
+% colorbar;
+% plot(q_ROBOT_est_vals(1,1:iter_break), q_ROBOT_est_vals(2,1:iter_break), 'r--', 'LineWidth', 1.5, 'DisplayName','Robot Est Trajectory');
+% plot(q_ROBOT_real_vals(1,1:iter_break), q_ROBOT_real_vals(2,1:iter_break), 'b-', 'LineWidth', 1.5, 'DisplayName','Robot Real Trajectory');
+% xlabel('X Coordinate');
+% ylabel('Y Coordinate');
+% title('Unicycle Robot Trajectory');
+% legend('Location','best');
+% grid on;
 
 %% Plot the error ellipses
 if PLOT_ERROR_ELLIPSES
@@ -190,8 +190,6 @@ if PLOT_ERROR_ELLIPSES
 end
 
 %% Plot covariance matrix - diagonal elements
-
-
 kfig=kfig+1;
 figure(kfig);
 hold on;
@@ -208,35 +206,35 @@ grid on;
 hold off;
 
 %% Plot in a 3D-view the field distribution
-kfig=kfig+1;
-figure(kfig);
-surf(X,Y,Z);
-hold on;
-plot3(Dx_peaks, Dy_peaks, Dz_peaks, 'r*', 'MarkerSize', 10);
-hold off;
+% kfig=kfig+1;
+% figure(kfig);
+% surf(X,Y,Z);
+% hold on;
+% plot3(Dx_peaks, Dy_peaks, Dz_peaks, 'r*', 'MarkerSize', 10);
+% hold off;
 
 %% Plot in a 3D-view the field curvature
-kfig=kfig+1;
-figure(kfig);
-hold on;
-surf(X,Y,k);
-title('Field curvature');
-hold off;
+% kfig=kfig+1;
+% figure(kfig);
+% hold on;
+% surf(X,Y,k);
+% title('Field curvature');
+% hold off;
 
 %% Plot field curvature
-kfig=kfig+1;
-figure(kfig);
-hold on
-plot(time(1:iter_break), k_ROBOT_vals(1,1:iter_break), 'LineWidth', 1.4, 'DisplayName', '$\kappa_{field}$');
-plot(time(1:iter_break), w_ROBOT_vals(1,1:iter_break)./v_ROBOT_vals(1,1:iter_break), 'LineWidth', 1.4,'Color','red', 'DisplayName', '$\kappa_{robot}$');
-legend('Interpreter', 'latex', 'Location', 'NorthWest');
-grid on;
-xlabel('Time [s]');
-ylabel('$\kappa$ Curvature [$m^{-1}$]');
-title('Curvature $\kappa$ [$m^{-1}$]');
-legend('Interpreter', 'latex', 'Location', 'NorthWest');
-grid on;
-hold off
+% kfig=kfig+1;
+% figure(kfig);
+% hold on
+% plot(time(1:iter_break), k_ROBOT_vals(1,1:iter_break), 'LineWidth', 1.4, 'DisplayName', '$\kappa_{field}$');
+% plot(time(1:iter_break), w_ROBOT_vals(1,1:iter_break)./v_ROBOT_vals(1,1:iter_break), 'LineWidth', 1.4,'Color','red', 'DisplayName', '$\kappa_{robot}$');
+% legend('Interpreter', 'latex', 'Location', 'NorthWest');
+% grid on;
+% xlabel('Time [s]');
+% ylabel('$\kappa$ Curvature [$m^{-1}$]');
+% title('Curvature $\kappa$ [$m^{-1}$]');
+% legend('Interpreter', 'latex', 'Location', 'NorthWest');
+% grid on;
+% hold off
 
 %% Plot field value
 kfig=kfig+1;
