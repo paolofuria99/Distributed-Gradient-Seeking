@@ -149,11 +149,11 @@ classdef DRONE < matlab.mixin.Copyable
             direction_norm = norm(direction);
 
             % Limiting velocity
-            u_lim = 1;
+            u_lim = 2;
             % Move up with velocity u_z if the height becomes less than a threshold
             z_min = 1;
-            u_z = 10;
-            if strcmp(obj.Connection,"on") == 1 % if the drone has updated estimates use them to compute controls; check for its height: if it becomes lower than the threshold, give a positive velocity in z
+            u_z = 2;
+            if strcmp(obj.Connection{index},'on') == 1 % if the drone has updated estimates use them to compute controls; check for its height: if it becomes lower than the threshold, give a positive velocity in z
                 if obj.q_real(3) < z_min
                     u = direction./direction_norm;
                     u = [u_lim.*u(1:2),u_z];
