@@ -23,6 +23,9 @@ classdef DRONE < matlab.mixin.Copyable
         % Process noise of robot's dynamics
         Q                   % []            (3x3 double)                     Noise on the dynamics model of the robot
 
+        % Process noise of robot's dynamics
+        Q_dyn_drone         % []            (3x3 double)                     Noise on the dynamics model of the drone
+
         % Number of neighbor drones
         N_neighbors         % []            (1x1 double)                     Number of neighbors
 
@@ -70,9 +73,13 @@ classdef DRONE < matlab.mixin.Copyable
                     % position by the drone
                     obj.Delta_x = zeros(3,params.max_iter+1);
 
-                    % Initialize the process noise
-                    obj.Q = (randn(3,3)-0.5)*params.std_dyn_xyz;
+                    % Initialize the process noise of the robot
+                    obj.Q = (randn(3,3)-0.5)*params.std_dyn_xy;
                     obj.Q = obj.Q*obj.Q';
+
+                    % Initialize the process noise of the drone
+                    obj.Q_dyn_drone = (randn(3,3)-0.5)*params.std_dyn_xyz;
+                    obj.Q_dyn_drone = obj.Q_dyn_drone*obj.Q_dyn_drone';
 
                     % Initialize number of neighbor drones
                     obj.N_neighbors = params.N_agents-1;
@@ -120,7 +127,7 @@ classdef DRONE < matlab.mixin.Copyable
                     z_old = q_old(3);
                     A = [1 0 0;0 1 0;0 0 1];
                     B = [obj.params.dt 0 0;0 obj.params.dt 0;0 0 obj.params.dt];
-                    q_new = A*q_old + B*u + mvnrnd(zeros(3,1),obj.Q)';
+                    q_new = A*q_old + B*u + mvnrnd(zeros(3,1),obj.Q_dyn_drone)';
 
                     obj.q_real = q_new;
 
